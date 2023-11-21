@@ -1,0 +1,7 @@
+---
+root_user: root
+root_password: root
+db: public
+user: user1
+password: password
+port_export: 13306

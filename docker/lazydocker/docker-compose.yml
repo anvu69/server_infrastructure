@@ -1,6 +1,7 @@
 version: '3'
 services:
   lazydocker:
+    restart: always
     build:
       context: https://github.com/jesseduffield/lazydocker.git
       args:

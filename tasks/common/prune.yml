@@ -1,0 +1,4 @@
+---
+- name: Delete older image
+  shell: |
+    docker system prune --force

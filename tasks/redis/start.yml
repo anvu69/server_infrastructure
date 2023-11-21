@@ -1,0 +1,17 @@
+---
+- name: Copy redis folder
+  copy: 
+    src: ./docker/redis
+    dest: ~/docker
+    mode: 0755
+    
+- name: Shut down service
+  shell: |
+    cd ~/docker/redis
+    docker compose down
+
+- name: Start redis
+  shell: |
+    cd ~/docker/redis
+    export NETWORK={{network}}
+    docker compose up -d

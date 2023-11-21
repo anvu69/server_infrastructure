@@ -1,0 +1,15 @@
+---
+- name: Deploy Mysql 8 service
+
+  hosts: all
+
+  become: true
+
+  vars_files:
+    - vars/common.yml
+    - vars/timezone.yml
+    - vars/mysql8.yml
+
+  tasks:
+    - import_tasks: tasks/mysql8/start.yml
+    - import_tasks: tasks/common/prune.yml
