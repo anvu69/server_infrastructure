@@ -2,3 +2,4 @@
 roles:
   - name: geerlingguy.docker
   - name: geerlingguy.git
+  - name: asapdotid.zsh

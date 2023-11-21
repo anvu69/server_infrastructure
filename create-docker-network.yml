@@ -1,7 +1,7 @@
 ---
 - name: Create default Docker network
 
-  hosts: lol-vn
+  hosts: all
 
   become: true
 

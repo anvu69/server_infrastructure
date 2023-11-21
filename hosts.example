@@ -1,0 +1,2 @@
+[all]
+0.0.0.0 ansible_ssh_user=root

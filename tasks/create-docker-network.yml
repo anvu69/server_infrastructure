@@ -1,5 +1,5 @@
 ---
-    - name: create docker network
-      shell: |
-        docker network inspect nginx_proxy >/dev/null 2>&1 || \
-        docker network create --driver bridge nginx_proxy
+- name: Create default Docker network
+  shell: |
+    docker network inspect nginx_proxy >/dev/null 2>&1 || \
+    docker network create --driver bridge nginx_proxy
