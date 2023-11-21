@@ -1,0 +1,5 @@
+---
+- name: Install btop
+  shell: |
+    dnf install -y epel-release
+    dnf install -y btop

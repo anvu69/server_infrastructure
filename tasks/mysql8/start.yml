@@ -1,0 +1,26 @@
+---
+- name: Copy Mysql 8 folder
+  copy: 
+    src: ./docker/mysql8
+    dest: ~/docker
+    mode: 0755
+    
+- name: Shut down service
+  shell: |
+    cd ~/docker/mysql8
+    docker compose down
+
+- name: Start Mysql 8
+  shell: |
+    cd ~/docker/mysql8
+    export TZ={{tz}}
+    export MYSQL_ROOT_USER={{root_user}}
+    export MYSQL_ROOT_PASSWORD={{root_password}}
+    export MYSQL_DATABASE={{db}}
+    export MYSQL_USER={{user}}
+    export MYSQL_PASSWORD={{password}}
+    export PORT={{port_export}}
+    export NETWORK={{network}}
+    export LOG_MAX_SIZE={{log_max_size}}
+    export LOG_MAX_FILE={{log_max_file}}
+    docker compose up -d

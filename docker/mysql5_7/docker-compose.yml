@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  mysql5_7:
+    image: mysql:5.7
+    container_name: mysql5_7
+    restart: always
+    environment:
+      - TZ=${TZ}
+      - MYSQL_ROOT_USER=${MYSQL_ROOT_USER:-root}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-r00t}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-db}
+      - MYSQL_USER=${MYSQL_USER:-user1}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-simpl3}
+    volumes:
+      - ./mysql_data:/var/lib/mysql
+    expose:
+      - ${PORT:-13306}
+    ports:
+      - 3306
+    logging:
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILE:-10}
+    networks:
+      - default
+
+networks:
+  default:
+    name: ${NETWORK:-nginx_proxy}
+    external: true

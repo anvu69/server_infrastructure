@@ -1,0 +1,9 @@
+---
+- name: Install btop
+
+  hosts: all
+
+  become: true
+
+  tasks:
+    - import_tasks: tasks/install-btop.yml
