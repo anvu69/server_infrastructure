@@ -1,0 +1,14 @@
+---
+- name: Install Nginx Proxy with Dockergen & Let's Encrypt
+
+  hosts: lol-vn
+
+  become: true
+
+  gather_facts: yes
+
+  vars_files:
+    - vars/nginx.yml
+
+  tasks:
+    - import_tasks: tasks/install-nginx.yml

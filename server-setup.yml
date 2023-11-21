@@ -1,0 +1,12 @@
+---
+- hosts: lol-vn
+
+  become: true
+  
+  roles:
+    - role: geerlingguy.git
+    - role: geerlingguy.docker
+  
+  tasks:
+    - import_tasks: tasks/create-docker-network.yml
+    

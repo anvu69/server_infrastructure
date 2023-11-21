@@ -1,0 +1,6 @@
+---
+nginx_web: nginx-web
+docker_gen: nginx-gen
+lets_encrypt: nginx-letsencrypt
+network: nginx_proxy
+nginx_files_path: ./nginx-data

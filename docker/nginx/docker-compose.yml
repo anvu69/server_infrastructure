@@ -1,0 +1,48 @@
+version: "3.8"
+services:
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy:alpine
+    labels:
+      com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: "true"
+    container_name: ${NGINX_WEB:-nginx-proxy}
+    restart: always
+    environment:
+      - TRUST_DOWNSTREAM_PROXY:true
+    ports:
+      - "${IP:-0.0.0.0}:${DOCKER_HTTP:-80}:80"
+      - "${IP:-0.0.0.0}:${DOCKER_HTTPS:-443}:443"
+    volumes:
+      - ${NGINX_FILES_PATH:-./data}/conf.d:/etc/nginx/conf.d
+      - ${NGINX_FILES_PATH:-./data}/vhost.d:/etc/nginx/vhost.d
+      - ${NGINX_FILES_PATH:-./data}/html:/usr/share/nginx/html
+      - ${NGINX_FILES_PATH:-./data}/certs:/etc/nginx/certs:ro
+      - ${NGINX_FILES_PATH:-./data}/htpasswd:/etc/nginx/htpasswd:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - /var/log/nginx:/var/log/nginx
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    logging:
+      driver: ${NGINX_WEB_LOG_DRIVER:-json-file}
+      options:
+        max-size: ${NGINX_WEB_LOG_MAX_SIZE:-4m}
+        max-file: ${NGINX_WEB_LOG_MAX_FILE:-10}
+
+  nginx-letsencrypt:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    container_name: ${LETS_ENCRYPT:-nginx-letsencrypt}
+    restart: always
+    volumes:
+      - ${NGINX_FILES_PATH:-./data}/conf.d:/etc/nginx/conf.d
+      - ${NGINX_FILES_PATH:-./data}/vhost.d:/etc/nginx/vhost.d
+      - ${NGINX_FILES_PATH:-./data}/html:/usr/share/nginx/html
+      - ${NGINX_FILES_PATH:-./data}/certs:/etc/nginx/certs:rw
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    logging:
+      driver: ${NGINX_LETSENCRYPT_LOG_DRIVER:-json-file}
+      options:
+        max-size: ${NGINX_LETSENCRYPT_LOG_MAX_SIZE:-2m}
+        max-file: ${NGINX_LETSENCRYPT_LOG_MAX_FILE:-10}
+
+networks:
+  default:
+    name: ${NETWORK:-webproxy}
+    external: true
