@@ -1,7 +1,11 @@
 ---
-- hosts: lol-vn
+- name: Setup new server with Docker & Nginx
+
+  hosts: lol-vn
 
   become: true
+
+  gather_facts: yes
   
   roles:
     - role: geerlingguy.git
@@ -9,4 +13,4 @@
   
   tasks:
     - import_tasks: tasks/create-docker-network.yml
-    
+    - import_tasks: tasks/install-nginx.yml
