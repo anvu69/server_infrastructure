@@ -8,6 +8,7 @@
   gather_facts: yes
 
   vars_files:
+    - vars/timezone.yml
     - vars/nginx.yml
 
   roles:
@@ -16,6 +17,7 @@
     - role: geerlingguy.docker
 
   tasks:
+    - import_tasks: tasks/set-timezone.yml
     - import_tasks: tasks/create-docker-network.yml
     - import_tasks: tasks/install-lazydocker.yml
     - import_tasks: tasks/install-nginx.yml
