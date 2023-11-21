@@ -20,5 +20,5 @@ Make new `hosts` file from `hosts.example` then edit target host address IP.
 ### Setup server
 
 ```shell
-ansible-playbook server-setup.yml
+ansible-playbook setup-server.yml
 ```
