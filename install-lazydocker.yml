@@ -1,0 +1,9 @@
+---
+- name: Install lazydocker
+
+  hosts: all
+
+  become: true
+
+  tasks:
+    - import_tasks: tasks/install-lazydocker.yml

@@ -17,5 +17,5 @@
 
   tasks:
     - import_tasks: tasks/create-docker-network.yml
-    - import_tasks: tasks/install-lazy-docker.yml
+    - import_tasks: tasks/install-lazydocker.yml
     - import_tasks: tasks/install-nginx.yml

@@ -1,16 +1,16 @@
 ---
-- name: copy nginx folder
+- name: Copy Nginx folder
   copy:
     src: ./docker/nginx
     dest: ~/docker
     mode: 0755
 
-- name: shutdown nginx service
+- name: Shutdown service
   shell: |
     cd ~/docker/nginx &&
     docker compose down
 
-- name: deploy nginx
+- name: Start Nginx
   shell: |
     export IP="{{ansible_default_ipv4.address}}"
     export NGINX_WEB={{nginx_web}}

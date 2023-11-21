@@ -1,0 +1,21 @@
+---
+- name: Copy lazydocker folder
+  copy:
+    src: ./docker/lazydocker
+    dest: ~/docker
+    mode: 0755
+
+- name: Shutdown service
+  shell: |
+    cd ~/docker/lazydocker &&
+    docker compose down
+
+- name: Start lazydocker
+  shell: |
+    cd ~/docker/lazydocker &&
+    docker compose up -d
+
+- name: Set alias lazydocker
+  shell: |
+    echo "alias lzd='docker exec -it lazydocker lazydocker'" >> ~/.zshrc
+    source ~/.zshrc
