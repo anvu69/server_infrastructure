@@ -1,16 +1,21 @@
 ---
 - name: Setup new server with Docker & Nginx
 
-  hosts: lol-vn
+  hosts: all
 
   become: true
 
   gather_facts: yes
-  
+
+  vars_files:
+    - vars/nginx.yml
+
   roles:
+    - role: asapdotid.zsh
     - role: geerlingguy.git
     - role: geerlingguy.docker
-  
+
   tasks:
     - import_tasks: tasks/create-docker-network.yml
+    - import_tasks: tasks/install-lazy-docker.yml
     - import_tasks: tasks/install-nginx.yml
