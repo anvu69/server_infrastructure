@@ -9,4 +9,4 @@
     - vars/timezone.yml
 
   tasks:
-    - import_tasks: tasks/set-timezone.yml
+    - import_tasks: tasks/utils.yml

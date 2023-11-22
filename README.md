@@ -12,6 +12,7 @@
 - Mysql 5.7 & Mysql 8 (optional)
 - Postgresql (optional)
 - Mongodb (optional)
+- Dockovpn (optional)
 
 ### Install galaxy package
 
