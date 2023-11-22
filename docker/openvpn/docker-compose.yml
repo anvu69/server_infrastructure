@@ -1,0 +1,13 @@
+version: '3'
+services:
+  dockovpn:
+    image: alekslitvinenk/openvpn
+    cap_add:
+        - NET_ADMIN
+    ports:
+        - 1194:1194/udp
+    environment:
+        HOST_ADDR: ${HOST_ADDR} 
+    volumes:
+        - ./openvpn_conf:/opt/Dockovpn_data
+    restart: always

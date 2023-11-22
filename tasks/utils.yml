@@ -1,0 +1,6 @@
+---
+- name: Set timezone
+  command: timedatectl set-timezone {{tz}}
+
+- name: Install net-tools
+  command: yum install net-tools
