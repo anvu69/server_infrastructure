@@ -1,5 +1,5 @@
 ---
-nginx_web: nginx-web
+nginx_app: nginx-app
 docker_gen: nginx-gen
-lets_encrypt: nginx-letsencrypt
+acme: nginx-proxy-acme
 nginx_files_path: ./nginx-data
