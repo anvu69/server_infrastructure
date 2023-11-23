@@ -14,10 +14,8 @@ services:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-simpl3}
     volumes:
       - ./mysql_data:/var/lib/mysql
-    expose:
-      - ${PORT:-13306}
     ports:
-      - 3306
+      - "${PORT:-13306}:3306"
     logging:
       options:
         max-size: ${LOG_MAX_SIZE:-10m}
