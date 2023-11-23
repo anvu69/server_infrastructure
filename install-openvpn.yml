@@ -1,0 +1,15 @@
+---
+- name: Install Openvpn
+
+  hosts: all
+
+  become: true
+
+  gather_facts: yes
+
+  vars_files:
+    - vars/openvpn.yml
+
+  tasks:
+    - import_tasks: tasks/install-openvpn.yml
+    - import_tasks: tasks/common/prune.yml

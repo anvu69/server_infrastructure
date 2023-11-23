@@ -1,0 +1,5 @@
+---
+host_addr: "{{ansible_default_ipv4.address}}"
+net_adapter: "{{ansible_default_ipv4.interface}}"
+host_tunnel_port: 1194
+host_config_port: 8080

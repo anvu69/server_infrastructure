@@ -3,4 +3,4 @@
   command: timedatectl set-timezone {{tz}}
 
 - name: Install net-tools
-  command: yum install net-tools
+  command: yum install -y net-tools

@@ -1,0 +1,20 @@
+---
+- name: Copy Openvpn folder
+  copy:
+    src: ./docker/openvpn
+    dest: ~/docker
+    mode: 0755
+
+- name: Shutdown service
+  shell: |
+    cd ~/docker/openvpn &&
+    docker compose down
+
+- name: Start Openvpn service
+  shell: |
+    export HOST_ADDR={{host_addr}}
+    export NET_ADAPTER={{net_adapter}}
+    export HOST_TUN_PORT={{host_tunnel_port}}
+    export HOST_CONF_PORT={{host_config_port}}
+    cd ~/docker/openvpn
+    docker compose up -d
