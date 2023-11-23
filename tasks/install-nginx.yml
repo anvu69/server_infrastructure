@@ -13,9 +13,9 @@
 - name: Start Nginx
   shell: |
     export IP="{{ansible_default_ipv4.address}}"
-    export NGINX_WEB={{nginx_web}}
+    export NGINX_APP={{nginx_app}}
     export DOCKER_GEN={{docker_gen}}
-    export LETS_ENCRYPT={{lets_encrypt}}
+    export ACME={{acme}}
     export NETWORK={{network}}
     export NGINX_FILES_PATH={{nginx_files_path}}
     cd ~/docker/nginx

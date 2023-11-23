@@ -4,7 +4,7 @@ services:
     image: nginxproxy/nginx-proxy:alpine
     labels:
       com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: "true"
-    container_name: ${NGINX_WEB:-nginx-proxy}
+    container_name: ${NGINX_APP:-nginx-proxy}
     restart: always
     environment:
       - TRUST_DOWNSTREAM_PROXY:true
@@ -26,9 +26,9 @@ services:
         max-size: ${LOG_MAX_SIZE:-4m}
         max-file: ${LOG_MAX_FILE:-10}
 
-  nginx-letsencrypt:
-    image: jrcs/letsencrypt-nginx-proxy-companion
-    container_name: ${LETS_ENCRYPT:-nginx-letsencrypt}
+  acme-companion:
+    image: nginxproxy/acme-companion
+    container_name: ${ACME:-nginx-proxy-acme}
     restart: always
     volumes:
       - ${NGINX_FILES_PATH:-./data}/conf.d:/etc/nginx/conf.d
@@ -36,6 +36,8 @@ services:
       - ${NGINX_FILES_PATH:-./data}/html:/usr/share/nginx/html
       - ${NGINX_FILES_PATH:-./data}/certs:/etc/nginx/certs:rw
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - DEFAULT_EMAIL=anvn@vgroup.vn
     logging:
       driver: ${NGINX_LETSENCRYPT_LOG_DRIVER:-json-file}
       options:

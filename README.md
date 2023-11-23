@@ -6,8 +6,7 @@
 - Docker & Docker compose
 - Zsh with Oh-My-Zsh
 - lazydocker
-- Nginx Proxy
-- Let's Encrypt Nginx Proxy Companion (TODO migrate to nginxproxy/acme-companion)
+- Nginx Proxy with ACME companion
 - Redis 6 (optional)
 - Mysql 5.7 & Mysql 8 (optional)
 - Postgresql (optional)
@@ -24,7 +23,6 @@ ansible-galaxy install -r requirements.yml
 Make new `hosts` file from `hosts.example` then edit target host address IP.
 
 ### Setup server
-
 ```shell
 ansible-playbook setup-server.yml
 ```
