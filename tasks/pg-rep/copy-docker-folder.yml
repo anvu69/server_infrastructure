@@ -1,0 +1,6 @@
+---
+- name: Copy template folder
+  copy: 
+    src: ./docker/pg-rep
+    dest: ~/docker
+    mode: 0755

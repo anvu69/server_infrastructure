@@ -1,0 +1,18 @@
+---
+prefix_service_name: pg
+tag_pg_rep: latest
+rep_port: 5432
+rep_primary_port: 5432
+rep_username: repmgr
+rep_password: repmgr
+num_of_rep_instance: 2 # min 1
+pg_postgres_user_password: postgres
+pg_username: admin
+pg_password: admin
+pg_database: admin
+tag_pgbouncer: latest
+pgbouncer_port: 6432
+pgbouncer_pool_mode: transaction
+tag_haproxy: latest
+haproxy_container_name: haproxy
+haproxy_port_out: 3000

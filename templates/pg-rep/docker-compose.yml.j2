@@ -1,0 +1,102 @@
+version: '3.9'
+
+configs:
+  haproxy:
+    file: ./haproxy.cfg
+  primary-check:
+    file: ./primary-check.sh
+  standby-check:
+    file: ./standby-check.sh
+
+volumes:
+{% for n in range(num_of_rep_instance + 1) %}
+  {{prefix_service_name}}_{{n}}_data:
+{% endfor %}
+
+networks:
+  default:
+    name: {{ network }}
+    external: true
+
+x-service-common: &service-common
+  image: bitnami/postgresql-repmgr:{{ tag_pg_rep }}
+  restart: always
+  deploy:
+    resources:
+      limits:
+        memory: 25G
+    replicas: 1
+    placement:
+      max_replicas_per_node: 1
+
+x-common-env: &common-env
+  REPMGR_USERNAME: {{rep_username}}
+  REPMGR_PASSWORD: {{rep_password}}
+  REPMGR_PARTNER_NODES: {% for n in range(num_of_rep_instance + 1) %}{{prefix_service_name}}-{{n}}:5432{% if n != num_of_rep_instance%},{%- endif %}{% endfor %}
+
+  REPMGR_PORT_NUMBER: {{rep_primary_port}}
+  REPMGR_PRIMARY_HOST: {{prefix_service_name}}-0
+  REPMGR_PRIMARY_PORT: {{rep_primary_port}}
+  POSTGRESQL_POSTGRES_PASSWORD: {{pg_postgres_user_password}}
+  POSTGRESQL_USERNAME: {{pg_username}}
+  POSTGRESQL_PASSWORD: {{pg_password}}
+  POSTGRESQL_DATABASE: {{pg_database}}
+  POSTGRESQL_SHARED_PRELOAD_LIBRARIES: pgaudit, pg_stat_statements
+  POSTGRESQL_SYNCHRONOUS_COMMIT_MODE: remote_write
+  POSTGRESQL_NUM_SYNCHRONOUS_REPLICAS: {{num_of_rep_instance}}
+
+services:
+{% for n in range(num_of_rep_instance + 1) %}
+  {{prefix_service_name}}-{{n}}:
+    <<: *service-common
+{% if n != 0 %}
+    depends_on:
+      - {{prefix_service_name}}-0
+{%- endif %}
+
+    volumes:
+      - {{prefix_service_name}}_{{n}}_data:/bitnami/postgresql
+    container_name: {{prefix_service_name}}-{{n}}
+    environment:
+      <<: *common-env
+      REPMGR_NODE_NAME: {{prefix_service_name}}-{{n}}
+      REPMGR_NODE_NETWORK_NAME: {{prefix_service_name}}-{{n}}
+{% endfor %}
+
+  {{prefix_service_name}}-{{haproxy_container_name}}:
+    image: haproxy:{{tag_haproxy}}
+    restart: always
+    mem_limit: 8192m
+    container_name: {{prefix_service_name}}-{{haproxy_container_name}}
+    ports:
+      - {{haproxy_port_out}}:3000
+      - {{rep_port}}:5432
+    privileged: true
+    configs:
+      - source: haproxy
+        target: /usr/local/etc/haproxy/haproxy.cfg
+      - source: primary-check
+        target: /build-psql/primary-check.sh
+      - source: standby-check
+        target: /build-psql/standby-check.sh
+    networks:
+      - default
+
+  {{prefix_service_name}}-pool:
+    image: bitnami/pgbouncer:{{tag_pgbouncer}}
+    container_name: {{prefix_service_name}}-pool
+    restart: always
+    ports:
+      - {{pgbouncer_port}}:6432
+    depends_on:
+      - {{prefix_service_name}}-{{haproxy_container_name}}
+    environment:
+      PGBOUNCER_EXTRA_FLAGS: --verbose
+      POSTGRESQL_HOST: {{prefix_service_name}}-{{haproxy_container_name}}
+      POSTGRESQL_PORT: {{rep_port}}
+      POSTGRESQL_USERNAME: {{pg_username}}
+      POSTGRESQL_PASSWORD: {{pg_password}}
+      PGBOUNCER_DATABASE: {{pg_database}}
+      PGBOUNCER_POOL_MODE: {{pgbouncer_pool_mode}}
+    networks:
+      - default

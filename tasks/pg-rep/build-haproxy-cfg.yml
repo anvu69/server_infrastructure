@@ -1,0 +1,15 @@
+---
+- name: Build haproxy config
+  template:
+    src: templates/pg-rep/haproxy.cfg.j2
+    dest: ~/docker/pg-rep/haproxy.cfg
+
+- name: Build primary check
+  template:
+    src: templates/pg-rep/primary-check.sh.j2
+    dest: ~/docker/pg-rep/primary-check.sh
+
+- name: Build standby check
+  template:
+    src: templates/pg-rep/standby-check.sh.j2
+    dest: ~/docker/pg-rep/standby-check.sh
