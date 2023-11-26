@@ -1,0 +1,5 @@
+---
+- name: Build docker-compose
+  template:
+    src: templates/pg-rep/docker-compose.yml.j2
+    dest: ~/docker/pg-rep/docker-compose.yml

@@ -20,10 +20,8 @@ services:
       ]
     volumes:
       - ./mysql_data:/var/lib/mysql
-    expose:
-      - ${PORT:-23306}
     ports:
-      - 3306
+      - "${PORT:-23306}:3306"
     logging:
       options:
         max-size: ${LOG_MAX_SIZE:-10m}

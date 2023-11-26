@@ -1,0 +1,4 @@
+- name: Shut down service
+  shell: |
+    cd ~/docker/pg-rep
+    docker compose down

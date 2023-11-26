@@ -1,0 +1,10 @@
+---
+- include_tasks: copy-docker-folder.yml
+
+- include_tasks: build-docker-compose.yml
+
+- include_tasks: build-haproxy-cfg.yml
+
+- include_tasks: stop.yml
+
+- include_tasks: start.yml

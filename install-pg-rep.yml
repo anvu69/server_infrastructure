@@ -1,0 +1,11 @@
+---
+- name: Deploy PostgreSQL with Replica Management & haproxy load balancing & pgbouncer pool service
+
+  hosts: all
+
+  vars_files:
+    - vars/common.yml
+    - vars/pg-rep.yml
+
+  tasks:
+    - import_tasks: tasks/pg-rep/main.yml

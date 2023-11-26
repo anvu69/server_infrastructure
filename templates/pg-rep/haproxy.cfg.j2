@@ -1,0 +1,51 @@
+global
+    maxconn 4096
+    ulimit-n 30000
+    external-check
+    insecure-fork-wanted
+    log stdout format raw daemon notice
+
+resolvers docker
+    nameserver dns1 127.0.0.11:53
+    hold valid 10s
+
+defaults
+    log     global
+    mode    tcp
+    option  tcplog
+    option  dontlognull
+    option tcp-check
+    option srvtcpka
+    http-reuse aggressive
+    timeout client  180m
+    timeout server  180m
+    timeout connect 2s
+
+listen stats
+    bind *:3000
+    mode http
+    stats enable
+    stats uri /
+    stats refresh 2s
+
+
+listen primary
+    bind *:5432
+    maxconn 2048
+    # option external-check
+    # external-check command /primary-check.sh
+    default-server resolvers docker init-addr none check inter 2s fall 1 rise 2 slowstart 4000
+{% for n in range(num_of_rep_instance + 1)%}
+    server {{prefix_service_name}}-{{n}} {{prefix_service_name}}-{{n}}:{{rep_primary_port}}
+{% endfor %}
+
+listen standy
+    bind *:5433
+    maxconn 2048
+    # option external-check
+    balance roundrobin
+    # external-check command /standby-check.sh
+    default-server resolvers docker init-addr none check inter 2s fall 1 rise 2 slowstart 4000
+{% for n in range(num_of_rep_instance + 1)%}
+    server {{prefix_service_name}}-{{n}} {{prefix_service_name}}-{{n}}:{{rep_primary_port}}
+{% endfor %}

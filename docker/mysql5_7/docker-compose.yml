@@ -12,6 +12,12 @@ services:
       - MYSQL_DATABASE=${MYSQL_DATABASE:-db}
       - MYSQL_USER=${MYSQL_USER:-user1}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-simpl3}
+    command:
+      [
+        'mysqld',
+        '--character-set-server=utf8mb4',
+        '--collation-server=utf8mb4_bin'
+      ]
     volumes:
       - ./mysql_data:/var/lib/mysql
     ports:

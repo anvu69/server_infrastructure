@@ -1,0 +1,4 @@
+- name: Start pg-rep
+  shell: |
+    cd ~/docker/pg-rep
+    docker compose up -d
