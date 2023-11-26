@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:${TAG:-latest}
+    container_name: postgres
+    restart: always
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${PORT:-5432}:5432"
+    logging:
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILE:-10}
+    networks:
+      - default
+
+networks:
+  default:
+    name: ${NETWORK:-nginx_proxy}
+    external: true

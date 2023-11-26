@@ -1,0 +1,26 @@
+---
+- name: Copy Postgres folder
+  copy: 
+    src: ./docker/postgresql
+    dest: ~/docker
+    mode: 0755
+    
+- name: Shut down service
+  shell: |
+    cd ~/docker/postgresql
+    docker compose down
+
+- name: Start Postgres
+  shell: |
+    cd ~/docker/postgresql
+    export TAG={{tag}}
+    export MYSQL_ROOT_USER={{root_user}}
+    export MYSQL_ROOT_PASSWORD={{root_password}}
+    export MYSQL_DATABASE={{db}}
+    export MYSQL_USER={{user}}
+    export MYSQL_PASSWORD={{password}}
+    export PORT={{port_export}}
+    export NETWORK={{network}}
+    export LOG_MAX_SIZE={{log_max_size}}
+    export LOG_MAX_FILE={{log_max_file}}
+    docker compose up -d
