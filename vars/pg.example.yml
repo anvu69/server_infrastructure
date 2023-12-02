@@ -1,0 +1,11 @@
+---
+deploy_path: pg
+service_name: postgres
+pg_tag: alpine
+pg_port: 5432
+pg_user: admin
+pg_password: admin
+pg_db: main
+pg_schema: main
+pg_lang: en_GB
+pg_initdb_args: --locale-provider=icu --icu-locale=en_GB

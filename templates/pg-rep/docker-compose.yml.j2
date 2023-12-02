@@ -49,6 +49,11 @@ services:
 {% for n in range(num_of_rep_instance + 1) %}
   {{prefix_service_name}}-{{n}}:
     <<: *service-common
+{% if n == 0 %}
+    ports:
+      - "15432:5432"
+{%- endif %}
+
 {% if n != 0 %}
     depends_on:
       - {{prefix_service_name}}-0
@@ -70,7 +75,7 @@ services:
     container_name: {{prefix_service_name}}-{{haproxy_container_name}}
     ports:
       - {{haproxy_port_out}}:3000
-      - {{rep_port}}:5432
+      - {{haproxy_pg_port}}:5432
     privileged: true
     configs:
       - source: haproxy
@@ -93,10 +98,11 @@ services:
     environment:
       PGBOUNCER_EXTRA_FLAGS: --verbose
       POSTGRESQL_HOST: {{prefix_service_name}}-{{haproxy_container_name}}
-      POSTGRESQL_PORT: {{rep_port}}
-      POSTGRESQL_USERNAME: {{pg_username}}
-      POSTGRESQL_PASSWORD: {{pg_password}}
+      POSTGRESQL_PORT: 5432
+      POSTGRESQL_USERNAME: {{rep_username}}
+      POSTGRESQL_PASSWORD: {{rep_password}}
       PGBOUNCER_DATABASE: {{pg_database}}
       PGBOUNCER_POOL_MODE: {{pgbouncer_pool_mode}}
+      PGBOUNCER_IGNORE_STARTUP_PARAMETERS: extra_float_digits
     networks:
       - default

@@ -1,3 +1,4 @@
+---
 - name: Shut down service
   shell: |
     cd ~/docker/pg-rep

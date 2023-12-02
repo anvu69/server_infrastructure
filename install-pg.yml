@@ -1,0 +1,13 @@
+---
+- name: Deploy Postgres service
+
+  hosts: lol
+
+  vars_files:
+    - vars/common.yml
+    - vars/timezone.yml
+    - vars/pg.yml
+
+  tasks:
+    - import_tasks: tasks/pg/main.yml
+    - import_tasks: tasks/common/prune.yml

@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  {{service_name}}:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: {{service_name}}
+    restart: always
+    ports:
+      - {{pg_port}}:5432
+    environment:
+      LANG: {{pg_lang}}.utf8
+      TZ: {{tz}}
+      PGTZ: {{tz}}
+      POSTGRES_USER: {{pg_user}}
+      POSTGRES_PASSWORD: {{pg_password}}
+      POSTGRES_DB: {{pg_db}}
+{% if pg_initdb_args %}
+      POSTGRES_INITDB_ARGS: "{{pg_initdb_args}}"
+{%- endif %}
+
+    volumes:
+      - ./{{service_name}}-data:/var/lib/postgresql/data
+    networks:
+      - default
+
+networks:
+  default:
+    name: {{ network }}
+    external: true
