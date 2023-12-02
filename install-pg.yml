@@ -1,7 +1,7 @@
 ---
 - name: Deploy Postgres service
 
-  hosts: lol
+  hosts: all
 
   vars_files:
     - vars/common.yml
