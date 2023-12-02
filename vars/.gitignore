@@ -2,3 +2,4 @@ mysql8.yml
 mysql5_7.yml
 timezone.yml
 pg-rep.yml
+pg.yml

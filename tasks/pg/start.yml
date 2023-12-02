@@ -1,0 +1,5 @@
+---
+- name: Start Postgres
+  shell: |
+    cd ~/docker/{{deploy_path}}
+    docker compose up -d

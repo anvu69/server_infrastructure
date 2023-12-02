@@ -1,0 +1,15 @@
+---
+- name: Build init_schema.sql template
+  template:
+    src: templates/pg/init_schema.sql.j2
+    dest: ~/docker/{{deploy_path}}/init_schema.sql
+
+- name: Build Dockerfile template
+  template:
+    src: templates/pg/Dockerfile.j2
+    dest: ~/docker/{{deploy_path}}/Dockerfile
+
+- name: Build docker-compose.yml template
+  template:
+    src: templates/pg/docker-compose.yml.j2
+    dest: ~/docker/{{deploy_path}}/docker-compose.yml

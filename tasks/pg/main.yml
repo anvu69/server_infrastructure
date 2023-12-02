@@ -1,0 +1,6 @@
+---
+- include_tasks: build-template.yml
+
+- include_tasks: stop.yml
+
+- include_tasks: start.yml

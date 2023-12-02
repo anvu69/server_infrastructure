@@ -1,3 +1,4 @@
+---
 - name: Start pg-rep
   shell: |
     cd ~/docker/pg-rep

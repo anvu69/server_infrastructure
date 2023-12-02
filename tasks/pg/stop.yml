@@ -1,5 +1,5 @@
 ---
 - name: Shut down service
   shell: |
-    cd ~/docker/pg-rep
+    cd ~/docker/{{deploy_path}}
     docker compose down
