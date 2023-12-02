@@ -41,7 +41,11 @@ ansible-playbook install-mysql8.yml
 ```
 
 ```shell
-ansible-playbook install-postgresql.yml
+ansible-playbook install-pg.yml
+```
+
+```shell
+ansible-playbook install-pg-rep.yml
 ```
 
 ```shell
