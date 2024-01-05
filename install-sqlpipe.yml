@@ -1,0 +1,9 @@
+---
+- name: Install sqlpipe
+
+  hosts: lol
+
+  become: true
+
+  tasks:
+    - import_tasks: tasks/install-sqlpipe.yml

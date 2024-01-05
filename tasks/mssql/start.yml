@@ -1,0 +1,22 @@
+---
+- name: Copy MSSQL folder
+  copy:
+    src: ./docker/mssql
+    dest: ~/docker
+    mode: 0755
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/mssql
+    docker compose down
+
+- name: Start MSSQL
+  shell: |
+    cd ~/docker/mssql
+    export SA_PASSWORD={{password}}
+    export MSSQL_PID={{pid}}
+    export PORT={{port_export}}
+    export NETWORK={{network}}
+    export LOG_MAX_SIZE={{log_max_size}}
+    export LOG_MAX_FILE={{log_max_file}}
+    docker compose up -d

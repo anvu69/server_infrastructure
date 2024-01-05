@@ -1,0 +1,16 @@
+---
+- name: Copy sqlpipe folder
+  copy:
+    src: ./docker/sqlpipe
+    dest: ~/docker
+    mode: 0755
+
+- name: Shutdown service
+  shell: |
+    cd ~/docker/sqlpipe &&
+    docker compose down
+
+- name: Start sqlpipe
+  shell: |
+    cd ~/docker/sqlpipe &&
+    docker compose up -d

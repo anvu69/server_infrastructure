@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  sqlpipe:
+    image: sqlpipe/sqlpipe
+    container_name: sqlpipe
+    environment:
+      VIRTUAL_PORT: 9000
+      VIRTUAL_HOST: db-pipe.kqxs99.net
+      LETSENCRYPT_HOST: db-pipe.kqxs99.net
+      LETSENCRYPT_EMAIL: anvn@vgroup.vn
+    ports:
+      - 9000
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+networks:
+  default:
+    name: nginx_proxy
+    external: true
