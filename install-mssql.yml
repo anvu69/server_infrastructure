@@ -1,0 +1,13 @@
+---
+- name: Deploy MSSQL service
+
+  hosts: lottery1
+
+  vars_files:
+    - vars/common.yml
+    - vars/timezone.yml
+    - vars/mssql.yml
+
+  tasks:
+    - import_tasks: tasks/mssql/start.yml
+    - import_tasks: tasks/common/prune.yml
