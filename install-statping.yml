@@ -1,0 +1,15 @@
+---
+- name: Deploy statping service
+
+  hosts: all
+
+  become: true
+
+  vars_files:
+    - vars/common.yml
+    - vars/timezone.yml
+    - vars/statping.yml
+
+  tasks:
+    - import_tasks: tasks/statping/start.yml
+    - import_tasks: tasks/common/prune.yml
