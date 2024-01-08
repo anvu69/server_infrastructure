@@ -7,3 +7,4 @@ mssql.yml
 elasticsearch.yml
 common.yml
 pgbouncer.yml
+mongo-cluster.yml

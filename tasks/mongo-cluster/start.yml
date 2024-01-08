@@ -1,0 +1,20 @@
+---
+- name: Copy mongo-cluster folder
+  copy:
+    src: ./docker/mongo-cluster
+    dest: ~/docker
+    mode: 0755
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/mongo-cluster
+    docker compose down
+
+- name: Start mongo-cluster
+  shell: |
+    cd ~/docker/mongo-cluster
+    export NETWORK={{network}}
+    export LOG_MAX_SIZE={{log_max_size}}
+    export LOG_MAX_FILE={{log_max_file}}
+
+    docker compose up -d
