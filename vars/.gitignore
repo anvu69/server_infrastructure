@@ -8,3 +8,4 @@ elasticsearch.yml
 common.yml
 pgbouncer.yml
 mongo-cluster.yml
+statping.yml
