@@ -1,13 +1,12 @@
 ---
-- name: Deploy MSSQL service
+- name: Deploy pgbouncer service
 
   hosts: all
 
   vars_files:
     - vars/common.yml
     - vars/timezone.yml
-    - vars/mssql.yml
 
   tasks:
-    - import_tasks: tasks/mssql/start.yml
+    - import_tasks: tasks/pgbouncer/start.yml
     - import_tasks: tasks/common/prune.yml

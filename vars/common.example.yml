@@ -1,0 +1,5 @@
+---
+network: nginx_proxy
+log_max_size: 10m
+log_max_file: 10
+letsencrypt_email: example@mail.com

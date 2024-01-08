@@ -4,3 +4,6 @@ timezone.yml
 pg-rep.yml
 pg.yml
 mssql.yml
+elasticsearch.yml
+common.yml
+pgbouncer.yml
