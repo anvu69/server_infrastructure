@@ -1,0 +1,21 @@
+---
+- name: Copy statping folder
+  copy: 
+    src: ./docker/statping
+    dest: ~/docker
+    mode: 0755
+    
+- name: Shut down service
+  shell: |
+    cd ~/docker/statping
+    docker compose down
+
+- name: Start statping
+  shell: |
+    cd ~/docker/statping
+    export VIRTUAL_HOST={{virtual_host}}
+    export LETSENCRYPT_EMAIL={{letsencrypt_email}}
+    export NETWORK={{network}}
+    export LOG_MAX_SIZE={{log_max_size}}
+    export LOG_MAX_FILE={{log_max_file}}
+    docker compose up -d
