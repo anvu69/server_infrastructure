@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  pgbouncer:
+    image: edoburu/pgbouncer
+    container_name: pgbounce
+    environment:
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=${DB_HOST}
+      - POOL_MODE=transaction
+      - AUTH_TYPE=plain
+    ports:
+      - "${PORT:-6432}:5432"
+
+networks:
+  default:
+    name: ${NETWORK:-nginx_proxy}
+    external: true

@@ -1,0 +1,22 @@
+---
+- name: Copy pgbouncer folder
+  copy:
+    src: ./docker/pgbouncer
+    dest: ~/docker
+    mode: 0755
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/pgbouncer
+    docker compose down
+
+- name: Start pgbouncer
+  shell: |
+    cd ~/docker/pgbouncer
+    export DB_USER={{user}}
+    export DB_PASSWORD={{password}}
+    export DB_HOST={{host}}
+    export NETWORK={{network}}
+    export LOG_MAX_SIZE={{log_max_size}}
+    export LOG_MAX_FILE={{log_max_file}}
+    docker compose up -d
