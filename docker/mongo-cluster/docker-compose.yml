@@ -1,0 +1,106 @@
+version: '3.8'
+
+networks:
+  default:
+    name: ${NETWORK:-nginx_proxy}
+    external: true
+
+x-service-common: &service-common
+  restart: always
+  image: mongo:6
+  networks:
+    - default
+
+services:
+  ## Router
+  router:
+    <<: *service-common
+    container_name: router
+    command: mongos --port 27017 --configdb rs-config-server/config:27017 --bind_ip_all
+    depends_on:
+      - config
+    ports:
+      - '27017:27017'
+    volumes:
+      - ./scripts:/scripts
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+
+  ## Config Servers
+  config:
+    <<: *service-common
+    container_name: config
+    command: mongod --port 27017 --configsvr --replSet rs-config-server
+    ports:
+      - 27017
+    depends_on:
+      - shard1-primary
+      - shard2-primary
+    volumes:
+      - ./scripts:/scripts
+
+  ## Shards
+  ## Shard 01
+  shard1-primary:
+    <<: *service-common
+    container_name: shard1-primary
+    command: mongod --port 27017 --shardsvr --replSet rs-shard-01
+    ports:
+      - 27017
+    depends_on:
+      - shard1-secondary-0
+      - shard1-secondary-1
+    volumes:
+      - ./scripts:/scripts
+      - ./shard1-primary:/data/db
+
+  shard1-secondary-0:
+    <<: *service-common
+    container_name: shard1-secondary-0
+    command: mongod --port 27017 --shardsvr --replSet rs-shard-01
+    ports:
+      - 27017
+    volumes:
+      - ./scripts:/scripts
+      - ./shard1-secondary-0:/data/db
+  shard1-secondary-1:
+    <<: *service-common
+    container_name: shard1-secondary-1
+    command: mongod --port 27017 --shardsvr --replSet rs-shard-01
+    ports:
+      - 27017
+    volumes:
+      - ./scripts:/scripts
+      - ./shard1-secondary-1:/data/db
+
+  ## Shard 02
+  shard2-primary:
+    <<: *service-common
+    container_name: shard2-primary
+    command: mongod --port 27017 --shardsvr --replSet rs-shard-02
+    ports:
+      - 27017
+    depends_on:
+      - shard2-secondary-0
+      - shard2-secondary-1
+    volumes:
+      - ./scripts:/scripts
+      - ./shard2-primary:/data/db
+  shard2-secondary-0:
+    <<: *service-common
+    container_name: shard2-secondary-0
+    command: mongod --port 27017 --shardsvr --replSet rs-shard-02
+    ports:
+      - 27017
+    volumes:
+      - ./scripts:/scripts
+      - ./shard2-secondary-0:/data/db
+  shard2-secondary-1:
+    <<: *service-common
+    container_name: shard2-secondary-1
+    command: mongod --port 27017 --shardsvr --replSet rs-shard-02
+    ports:
+      - 27017
+    volumes:
+      - ./scripts:/scripts
+      - ./shard2-secondary-1:/data/db

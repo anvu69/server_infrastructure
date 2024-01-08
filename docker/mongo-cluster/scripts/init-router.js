@@ -1,0 +1,6 @@
+sh.addShard('rs-shard-01/shard1-primary:27017')
+sh.addShard('rs-shard-01/shard1-secondary-0:27017')
+sh.addShard('rs-shard-01/shard1-secondary-1:27017')
+sh.addShard('rs-shard-02/shard2-primary:27017')
+sh.addShard('rs-shard-02/shard2-secondary-0:27017')
+sh.addShard('rs-shard-02/shard2-secondary-1:27017')
