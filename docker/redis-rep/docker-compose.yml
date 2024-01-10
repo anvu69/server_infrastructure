@@ -1,0 +1,98 @@
+version: '3.8'
+
+networks:
+  default:
+    name: nginx_proxy
+    external: true
+
+services:
+  r1:
+    container_name: r1
+    image: redis
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - ./redis-server-conf:/usr/local/etc/redis
+    ports:
+      - 6379
+    networks:
+      - default
+  r2:
+    container_name: r2
+    image: redis
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - ./redis-server-conf:/usr/local/etc/redis
+    networks:
+      - default
+  r3:
+    container_name: r3
+    image: redis
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - ./redis-server-conf:/usr/local/etc/redis
+    networks:
+      - default
+  r4:
+    container_name: r4
+    image: redis
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - ./redis-server-conf:/usr/local/etc/redis
+    networks:
+      - default
+  r5:
+    container_name: r5
+    image: redis
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - ./redis-server-conf:/usr/local/etc/redis
+    networks:
+      - default
+  r6:
+    container_name: r6
+    image: redis
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - ./redis-server-conf:/usr/local/etc/redis
+    networks:
+      - default
+  redis-proxy:
+    container_name: redis-proxy
+    image: haproxy:lts-alpine
+    volumes:
+      - ./haproxy:/usr/local/etc/haproxy:ro
+    ports:
+      - '9000:9000' #stat
+      - '16379:16379' #redis
+    depends_on:
+      - r1
+      - r2
+      - r3
+      - r4
+      - r5
+      - r6
+    networks:
+      - default
+  redis-cluster-creator:
+    container_name: redis-cluster-creator
+    image: redis
+    command: /usr/local/etc/redis/redis-cluster-create.sh
+    volumes:
+      - ./redis-creator-conf:/usr/local/etc/redis
+    depends_on:
+      - r1
+      - r2
+      - r3
+      - r4
+      - r5
+      - r6
+      - redis-proxy
+    networks:
+      - default
+  redis-insight:
+    container_name: redis-insight
+    image: redislabs/redisinsight
+    ports:
+      - 8001:8001
+    depends_on:
+      - redis-proxy

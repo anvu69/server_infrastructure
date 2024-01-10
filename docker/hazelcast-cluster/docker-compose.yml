@@ -1,0 +1,33 @@
+version: "3.8"
+services:
+  hc1:
+    image: hazelcast/hazelcast:5.4.0-SNAPSHOT-slim
+    container_name: hc1
+    hostname: hc1
+    ports:
+      - 5701
+  hc2:
+    image: hazelcast/hazelcast:5.4.0-SNAPSHOT-slim
+    container_name: hc2
+    hostname: hc2
+    ports:
+      - 5701
+  hc3:
+    image: hazelcast/hazelcast:5.4.0-SNAPSHOT-slim
+    container_name: hc3
+    hostname: hc3
+    ports:
+      - 5701
+  hc4:
+    image: hazelcast/hazelcast:5.4.0-SNAPSHOT-slim
+    container_name: hc4
+    hostname: hc4
+    ports:
+      - 5701
+  management-center:
+    image: hazelcast/management-center
+    ports:
+      - "8080:8080"
+    environment:
+      - MC_DEFAULT_CLUSTER=dev
+      - MC_DEFAULT_CLUSTER_MEMBERS=hc1,hc2,hc3,hc4
