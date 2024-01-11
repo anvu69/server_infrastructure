@@ -1,0 +1,54 @@
+version: '3.8'
+
+networks:
+  default:
+    name: {{ network }}
+    external: true
+
+x-service-common: &service-common
+  image: redis
+  command: redis-server /usr/local/etc/redis/redis.conf
+  volumes:
+    - ./redis-server-conf:/usr/local/etc/redis
+  ports:
+    - 6379
+  networks:
+    - default
+
+services:
+{% for n in range(0, num_of_rep_instance) %}
+  r{{n+1}}:
+    <<: *service-common
+    container_name: r{{n+1}}
+{% endfor %}
+  r-proxy:
+    container_name: r-proxy
+    restart: always
+    image: haproxy:lts-alpine
+    volumes:
+      - ./haproxy:/usr/local/etc/haproxy:ro
+    ports:
+      - '{{haproxy_stat_port_out}}:8404' #stat
+      - '{{haproxy_redis_port_out}}:16379' #redis
+    ulimits:
+      nofile:
+        soft: 1000000
+        hard: 1000000
+    networks:
+      - default
+    depends_on:
+{% for n in range(0, num_of_rep_instance) %}
+      - r{{n+1}}
+{% endfor %}
+  r-cluster-creator:
+    container_name: r-cluster-creator
+    image: redis
+    command: /usr/local/etc/redis/redis-cluster-create.sh
+    volumes:
+      - ./redis-creator-conf:/usr/local/etc/redis
+    depends_on:
+{% for n in range(0, num_of_rep_instance) %}
+      - r{{n+1}}
+{% endfor %}
+    networks:
+      - default

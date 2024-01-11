@@ -1,0 +1,6 @@
+---
+- name: Build cluster creator config
+  template:
+    src: templates/redis-rep/redis-creator-conf/redis-cluster-create.sh.j2
+    dest: ~/docker/redis-rep/redis-creator-conf/redis-cluster-create.sh
+    mode: 0755

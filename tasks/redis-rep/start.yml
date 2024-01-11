@@ -1,0 +1,5 @@
+---
+- name: Start redis-rep
+  shell: |
+    cd ~/docker/redis-rep
+    docker compose up -d

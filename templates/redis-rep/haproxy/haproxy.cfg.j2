@@ -1,0 +1,27 @@
+defaults
+  mode http
+  timeout client 10s
+  timeout connect 5s
+  timeout server 10s
+  timeout http-request 10s
+  log global
+
+listen stats
+  bind *:8404
+  mode http
+  stats enable
+  stats uri /stats
+  stats refresh 10s
+
+listen backend_redis
+  bind *:16379
+  mode tcp
+  option tcp-check
+  tcp-check connect
+  tcp-check send PING\r\n
+  tcp-check expect string +PONG
+  tcp-check send QUIT\r\n
+  tcp-check expect string +OK
+{% for n in range(0, num_of_rep_instance) %}
+  server beredis{{n+1}} r{{n+1}}:6379 maxconn 1024 check inter 5s fall 3 rise 3 on-marked-down shutdown-sessions
+{% endfor %}

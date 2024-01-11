@@ -1,0 +1,5 @@
+---
+- name: Build haproxy conf
+  template:
+    src: templates/redis-rep/haproxy/haproxy.cfg.j2
+    dest: ~/docker/redis-rep/haproxy/haproxy.cfg

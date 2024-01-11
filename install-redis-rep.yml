@@ -1,0 +1,11 @@
+---
+- name: Deploy Redis Replica with haproxy load balancing
+
+  hosts: all
+
+  vars_files:
+    - vars/common.yml
+    - vars/redis-rep.yml
+
+  tasks:
+    - import_tasks: tasks/redis-rep/main.yml
