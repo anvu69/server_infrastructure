@@ -22,6 +22,8 @@ services:
     command: redis-server /usr/local/etc/redis/redis.conf
     volumes:
       - ./redis-server-conf:/usr/local/etc/redis
+    ports:
+      - 6379
     networks:
       - default
   r3:
@@ -30,6 +32,8 @@ services:
     command: redis-server /usr/local/etc/redis/redis.conf
     volumes:
       - ./redis-server-conf:/usr/local/etc/redis
+    ports:
+      - 6379
     networks:
       - default
   r4:
@@ -38,6 +42,8 @@ services:
     command: redis-server /usr/local/etc/redis/redis.conf
     volumes:
       - ./redis-server-conf:/usr/local/etc/redis
+    ports:
+      - 6379
     networks:
       - default
   r5:
@@ -46,6 +52,8 @@ services:
     command: redis-server /usr/local/etc/redis/redis.conf
     volumes:
       - ./redis-server-conf:/usr/local/etc/redis
+    ports:
+      - 6379
     networks:
       - default
   r6:
@@ -54,16 +62,23 @@ services:
     command: redis-server /usr/local/etc/redis/redis.conf
     volumes:
       - ./redis-server-conf:/usr/local/etc/redis
+    ports:
+      - 6379
     networks:
       - default
   redis-proxy:
     container_name: redis-proxy
+    restart: always
     image: haproxy:lts-alpine
     volumes:
       - ./haproxy:/usr/local/etc/haproxy:ro
     ports:
-      - '9000:9000' #stat
+      - '8404:8404' #stat
       - '16379:16379' #redis
+    ulimits:
+      nofile:
+        soft: 1000000
+        hard: 1000000
     depends_on:
       - r1
       - r2
@@ -89,10 +104,3 @@ services:
       - redis-proxy
     networks:
       - default
-  redis-insight:
-    container_name: redis-insight
-    image: redislabs/redisinsight
-    ports:
-      - 8001:8001
-    depends_on:
-      - redis-proxy
