@@ -1,0 +1,4 @@
+---
+num_of_rep_instance: 6
+haproxy_redis_port_out: 16379
+haproxy_stat_port_out: 8404

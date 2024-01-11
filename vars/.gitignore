@@ -9,3 +9,4 @@ common.yml
 pgbouncer.yml
 mongo-cluster.yml
 statping.yml
+redis-rep.yml

@@ -1,0 +1,5 @@
+---
+- name: Build docker-compose
+  template:
+    src: templates/redis-rep/docker-compose.yml.j2
+    dest: ~/docker/redis-rep/docker-compose.yml

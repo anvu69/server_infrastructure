@@ -1,0 +1,5 @@
+---
+- name: Shut down service
+  shell: |
+    cd ~/docker/redis-rep
+    docker compose down

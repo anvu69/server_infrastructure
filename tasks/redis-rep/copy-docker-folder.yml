@@ -1,0 +1,6 @@
+---
+- name: Copy template folder
+  copy:
+    src: ./docker/redis-rep
+    dest: ~/docker
+    mode: 0755
