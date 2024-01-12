@@ -1,0 +1,4 @@
+---
+root_password: root
+db: public
+port_export: 6033

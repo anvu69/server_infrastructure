@@ -1,5 +1,5 @@
 ---
-- name: Copy template folder
+- name: Copy redis-rep folder
   copy:
     src: ./docker/redis-rep
     dest: ~/docker

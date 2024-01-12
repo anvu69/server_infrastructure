@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  mysql-master1:
+    image: mysql:8
+    container_name: mysql-master1
+    restart: always
+    volumes:
+      - ./master-conf:/etc/mysql/conf.d:ro
+      - ./master1:/var/lib/mysql
+      - ./master.sql:/docker-entrypoint-initdb.d/init.sql:rw
+    environment:
+      TZ: ${TZ}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-r00t}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-db}
+    ports:
+      - 3306
+    logging:
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILE:-10}
+
+  mysql-slave1:
+    image: mysql:8
+    container_name: mysql-slave1
+    restart: always
+    volumes:
+      - ./slave-conf/slave1:/etc/mysql/conf.d:ro
+      - ./slave1:/var/lib/mysql
+      - ./slave.sql:/docker-entrypoint-initdb.d/init.sql:rw
+    environment:
+      TZ: ${TZ}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-r00t}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-db}
+    depends_on:
+      - mysql-master1
+    ports:
+      - 3306
+    logging:
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILE:-10}
+
+  mysql-slave2:
+    image: mysql:8
+    container_name: mysql-slave2
+    restart: always
+    volumes:
+      - ./slave-conf/slave2:/etc/mysql/conf.d:ro
+      - ./slave2:/var/lib/mysql
+      - ./slave.sql:/docker-entrypoint-initdb.d/init.sql:rw
+    environment:
+      TZ: ${TZ}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-r00t}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-db}
+    depends_on:
+      - mysql-master1
+    ports:
+      - 3306
+    logging:
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILE:-10}
+
+  proxysql:
+    image: proxysql/proxysql
+    container_name: proxysql
+    ports:
+      - '${PORT:-6033}:6033'
+      - 6032
+      - 6080
+    volumes:
+      - ./proxysql/proxysql.cnf:/etc/proxysql.cnf
+    depends_on:
+      - mysql-master1
+      - mysql-slave1
+      - mysql-slave2
+
+networks:
+  default:
+    name: ${NETWORK:-nginx_proxy}
+    external: true

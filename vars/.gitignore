@@ -10,3 +10,4 @@ pgbouncer.yml
 mongo-cluster.yml
 statping.yml
 redis-rep.yml
+mysql-proxysql.yml

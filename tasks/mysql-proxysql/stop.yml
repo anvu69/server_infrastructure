@@ -1,0 +1,5 @@
+---
+- name: Shut down service
+  shell: |
+    cd ~/docker/mysql-proxysql
+    docker compose down

@@ -1,0 +1,10 @@
+---
+- include_tasks: copy-docker-folder.yml
+
+- include_tasks: build-proxysql-cnf.yml
+
+- include_tasks: stop.yml
+
+- include_tasks: start.yml
+
+- include_tasks: post-install.yml
