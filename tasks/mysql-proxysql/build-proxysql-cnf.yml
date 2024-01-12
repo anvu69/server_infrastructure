@@ -1,0 +1,5 @@
+---
+- name: Build proxysql.cnf
+  template:
+    src: templates/mysql-proxysql/proxysql.cnf.j2
+    dest: ~/docker/mysql-proxysql/proxysql/proxysql.cnf

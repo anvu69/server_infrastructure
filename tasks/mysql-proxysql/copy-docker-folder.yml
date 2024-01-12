@@ -1,0 +1,6 @@
+---
+- name: Copy mysql-proxysql folder
+  copy:
+    src: ./docker/mysql-proxysql
+    dest: ~/docker
+    mode: 0755

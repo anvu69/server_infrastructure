@@ -1,0 +1,6 @@
+master1/
+slave1/
+slave2/
+
+!slave-conf/slave1
+!slave-conf/slave2

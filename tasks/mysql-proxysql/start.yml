@@ -1,0 +1,12 @@
+---
+- name: Start mysql-proxysql
+  shell: |
+    cd ~/docker/mysql-proxysql
+    export TZ={{tz}}
+    export MYSQL_ROOT_PASSWORD={{root_password}}
+    export MYSQL_DATABASE={{db}}
+    export PORT={{port_export}}
+    export NETWORK={{network}}
+    export LOG_MAX_SIZE={{log_max_size}}
+    export LOG_MAX_FILE={{log_max_file}}
+    docker compose up -d
