@@ -1,0 +1,13 @@
+---
+- name: Deploy Mongo Sharding service
+
+  hosts: all
+
+  vars_files:
+    - vars/common.yml
+    - vars/timezone.yml
+    - vars/mongo-cluster.yml
+
+  tasks:
+    - import_tasks: tasks/mongo-cluster/start.yml
+    - import_tasks: tasks/common/prune.yml

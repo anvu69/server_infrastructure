@@ -1,0 +1,6 @@
+---
+username_admin_mc: admin
+password_admin_mc: password # must not contain username
+cluster_name: dev
+virtual_host: hazel-manager-center.example.com
+letsencrypt_email: example@mail.com

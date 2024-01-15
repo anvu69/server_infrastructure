@@ -20,11 +20,9 @@ services:
     depends_on:
       - config
     ports:
-      - '27017:27017'
+      - '27027:27017'
     volumes:
       - ./scripts:/scripts
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=root
 
   ## Config Servers
   config:

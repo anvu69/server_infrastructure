@@ -1,3 +1,4 @@
 ---
 root_user: root
 root_password: root
+db: db

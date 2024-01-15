@@ -5,6 +5,12 @@
     dest: ~/docker
     mode: 0755
 
+- name: Build auth script
+  template:
+    src: templates/mongo-cluster/auth.js.j2
+    dest: ~/docker/mongo-cluster/scripts/auth.js
+    mode: 0755
+
 - name: Shut down service
   shell: |
     cd ~/docker/mongo-cluster
@@ -16,5 +22,9 @@
     export NETWORK={{network}}
     export LOG_MAX_SIZE={{log_max_size}}
     export LOG_MAX_FILE={{log_max_file}}
-
     docker compose up -d
+
+- name: Post install
+  shell: |
+    cd ~/docker/mongo-cluster
+    ./post-install.sh

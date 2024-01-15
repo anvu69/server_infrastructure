@@ -11,3 +11,5 @@ mongo-cluster.yml
 statping.yml
 redis-rep.yml
 mysql-proxysql.yml
+hazelcast.yml
+rabbitmq-cluster.yml

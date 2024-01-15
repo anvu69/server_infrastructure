@@ -6,7 +6,8 @@
   vars_files:
     - vars/common.yml
     - vars/timezone.yml
+    - vars/pgbouncer.yml
 
   tasks:
     - import_tasks: tasks/pgbouncer/start.yml
-    - import_tasks: tasks/common/prune.yml
+    # - import_tasks: tasks/common/prune.yml

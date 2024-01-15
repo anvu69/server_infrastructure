@@ -9,5 +9,5 @@
     - vars/mysql-proxysql.yml
 
   tasks:
-    - import_tasks: tasks/mysql-proxysql/start.yml
+    - import_tasks: tasks/mysql-proxysql/main.yml
     - import_tasks: tasks/common/prune.yml

@@ -1,0 +1,16 @@
+---
+- name: Copy Nginx folder
+  copy:
+    src: ./docker/nginx-proxy-management
+    dest: ~/docker
+    mode: 0755
+
+- name: Shutdown service
+  shell: |
+    cd ~/docker/nginx-proxy-management &&
+    docker compose down
+
+- name: Start Nginx
+  shell: |
+    cd ~/docker/nginx-proxy-management
+    docker compose up -d
