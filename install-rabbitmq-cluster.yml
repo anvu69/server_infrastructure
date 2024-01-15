@@ -1,0 +1,11 @@
+---
+- name: Deploy RabbitMQ + haproxy
+
+  hosts: all
+
+  vars_files:
+    - vars/common.yml
+    - vars/rabbitmq-cluster.yml
+
+  tasks:
+    - import_tasks: tasks/rabbitmq-cluster/start.yml

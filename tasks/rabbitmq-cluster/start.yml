@@ -1,0 +1,20 @@
+---
+- name: Copy rabbitmq-cluster folder
+  copy:
+    src: ./docker/rabbitmq-cluster
+    dest: ~/docker
+    mode: 0755
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/rabbitmq-cluster
+    docker compose down
+
+- name: Start rabbitmq-cluster
+  shell: |
+    cd ~/docker/rabbitmq-cluster
+    export RABBITMQ_DEFAULT_USER={{user}}
+    export RABBITMQ_DEFAULT_PASS={{password}}
+    export RABBITMQ_DEFAULT_VHOST=/
+    export NETWORK={{network}}
+    docker compose up -d

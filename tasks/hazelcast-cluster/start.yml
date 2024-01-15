@@ -1,0 +1,24 @@
+---
+- name: Copy hazelcast-cluster folder
+  copy:
+    src: ./docker/hazelcast-cluster
+    dest: ~/docker
+    mode: 0755
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/hazelcast-cluster
+    docker compose down
+
+- name: Start hazelcast-cluster
+  shell: |
+    cd ~/docker/hazelcast-cluster
+    export CLUSTER_NAME={{cluster_name}}
+    export MC_ADMIN_USER={{username_admin_mc}}
+    export MC_ADMIN_PASSWORD={{password_admin_mc}}
+    export VIRTUAL_HOST={{virtual_host}}
+    export LETSENCRYPT_EMAIL={{letsencrypt_email}}
+    export NETWORK={{network}}
+    export LOG_MAX_SIZE={{log_max_size}}
+    export LOG_MAX_FILE={{log_max_file}}
+    docker compose up -d

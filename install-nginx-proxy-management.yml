@@ -1,0 +1,9 @@
+---
+- name: Install Nginx Proxy Management
+
+  hosts: all
+
+  gather_facts: yes
+
+  tasks:
+    - import_tasks: tasks/install-nginx-proxy-management.yml
