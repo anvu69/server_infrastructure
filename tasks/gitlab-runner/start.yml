@@ -1,0 +1,17 @@
+---
+- name: Copy gitlab-runner folder
+  copy:
+    src: ./docker/gitlab-runner
+    dest: ~/docker
+    mode: 0755
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/gitlab-runner
+    docker compose down
+
+- name: Start gitlab-runner
+  shell: |
+    cd ~/docker/gitlab-runner
+    export TZ={{tz}}
+    docker compose up -d

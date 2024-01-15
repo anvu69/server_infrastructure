@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  gr1:
+    image: gitlab/gitlab-runner:alpine
+    container_name: gr1
+    restart: always
+    volumes:
+      - gr1-config:/etc/gitlab-runner
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - TZ=${TZ}
+  gr2:
+    image: gitlab/gitlab-runner:alpine
+    container_name: gr2
+    restart: always
+    volumes:
+      - gr2-config:/etc/gitlab-runner
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - TZ=${TZ}
+  gr3:
+    image: gitlab/gitlab-runner:alpine
+    container_name: gr3
+    restart: always
+    volumes:
+      - gr2-config:/etc/gitlab-runner
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - TZ=${TZ}
+
+volumes:
+  gr1-config:
+  gr2-config:
+  gr3-config:

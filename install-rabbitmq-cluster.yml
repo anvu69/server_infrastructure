@@ -1,7 +1,7 @@
 ---
 - name: Deploy RabbitMQ + haproxy
 
-  hosts: all
+  hosts: w88core
 
   vars_files:
     - vars/common.yml
