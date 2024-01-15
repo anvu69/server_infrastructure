@@ -18,4 +18,3 @@
 # - name: Set alias lazydocker
 #   shell: |
 #     echo "alias lzd='docker exec -it lazydocker lazydocker'" >> ~/.zshrc
-#     source ~/.zshrc
