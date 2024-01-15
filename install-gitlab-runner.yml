@@ -1,0 +1,14 @@
+---
+- name: Deploy gitlab-runner service
+
+  hosts: w88core
+
+  become: true
+
+  vars_files:
+    - vars/common.yml
+    - vars/timezone.yml
+
+  tasks:
+    - import_tasks: tasks/gitlab-runner/start.yml
+    - import_tasks: tasks/common/prune.yml
