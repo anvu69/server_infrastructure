@@ -1,0 +1,26 @@
+---
+- name: Copy elasticsearch-cluster folder
+  copy:
+    src: ./docker/elasticsearch-cluster
+    dest: ~/docker
+    mode: 0755
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/elasticsearch-cluster
+    export STACK_VERSION={{stack_version}}
+    docker compose down
+
+- name: Start elasticsearch-cluster
+  shell: |
+    cd ~/docker/elasticsearch-cluster
+    export ELASTIC_PASSWORD={{elastic_password}}
+    export ELASTIC_VIRTUAL_HOST={{elastic_virtual_host}}
+    export KIBANA_PASSWORD={{kibana_password}}
+    export KIBANA_VIRTUAL_HOST={{kibana_virtual_host}}
+    export STACK_VERSION={{stack_version}}
+    export NETWORK={{network}}
+    export LETSENCRYPT_EMAIL={{letsencrypt_email}}
+    export LOG_MAX_SIZE={{log_max_size}}
+    export LOG_MAX_FILE={{log_max_file}}
+    docker compose up -d --build

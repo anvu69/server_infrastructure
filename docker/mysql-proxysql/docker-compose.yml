@@ -2,13 +2,23 @@ version: '3.8'
 
 services:
   mysql-master1:
-    image: mysql:8
+    image: mysql:5.7
     container_name: mysql-master1
     restart: always
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     volumes:
       - ./master-conf:/etc/mysql/conf.d:ro
       - ./master1:/var/lib/mysql
       - ./master.sql:/docker-entrypoint-initdb.d/init.sql:rw
+    # command:
+    #   [
+    #     'mysqld',
+    #     '--character-set-server=utf8mb4',
+    #     '--collation-server=utf8mb4_bin'
+    #   ]
     environment:
       TZ: ${TZ}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-r00t}
@@ -21,13 +31,23 @@ services:
         max-file: ${LOG_MAX_FILE:-10}
 
   mysql-slave1:
-    image: mysql:8
+    image: mysql:5.7
     container_name: mysql-slave1
     restart: always
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     volumes:
       - ./slave-conf/slave1:/etc/mysql/conf.d:ro
       - ./slave1:/var/lib/mysql
       - ./slave.sql:/docker-entrypoint-initdb.d/init.sql:rw
+    # command:
+    #   [
+    #     'mysqld',
+    #     '--character-set-server=utf8mb4',
+    #     '--collation-server=utf8mb4_bin'
+    #   ]
     environment:
       TZ: ${TZ}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-r00t}
@@ -42,13 +62,23 @@ services:
         max-file: ${LOG_MAX_FILE:-10}
 
   mysql-slave2:
-    image: mysql:8
+    image: mysql:5.7
     container_name: mysql-slave2
     restart: always
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     volumes:
       - ./slave-conf/slave2:/etc/mysql/conf.d:ro
       - ./slave2:/var/lib/mysql
       - ./slave.sql:/docker-entrypoint-initdb.d/init.sql:rw
+    # command:
+    #   [
+    #     'mysqld',
+    #     '--character-set-server=utf8mb4',
+    #     '--collation-server=utf8mb4_bin'
+    #   ]
     environment:
       TZ: ${TZ}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-r00t}
@@ -65,6 +95,10 @@ services:
   proxysql:
     image: proxysql/proxysql
     container_name: proxysql
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     ports:
       - '${PORT:-6033}:6033'
       - 6032

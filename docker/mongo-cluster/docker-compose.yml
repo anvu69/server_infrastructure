@@ -20,7 +20,7 @@ services:
     depends_on:
       - config
     ports:
-      - '27027:27017'
+      - '18018:27017'
     volumes:
       - ./scripts:/scripts
 
