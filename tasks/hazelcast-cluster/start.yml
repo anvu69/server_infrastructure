@@ -13,6 +13,7 @@
 - name: Start hazelcast-cluster
   shell: |
     cd ~/docker/hazelcast-cluster
+    export IP="{{ansible_default_ipv4.address}}"
     export CLUSTER_NAME={{cluster_name}}
     export MC_ADMIN_USER={{username_admin_mc}}
     export MC_ADMIN_PASSWORD={{password_admin_mc}}

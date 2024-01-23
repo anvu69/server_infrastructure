@@ -3,4 +3,4 @@ sleep 10
 {% for n in range(0, num_of_rep_instance) %}
 r_{{n}}_ip=$(getent hosts r{{n+1}} | awk '{ print $1 }')
 {% endfor %}
-redis-cli --cluster create {% for n in range(0, num_of_rep_instance) %}$r_{{n}}_ip:6379{% endfor %} --cluster-replicas 1 --cluster-yes
+redis-cli --cluster create {% for n in range(0, num_of_rep_instance) %}$r_{{n}}_ip:6379 {% endfor %} --cluster-replicas 1 --cluster-yes

@@ -8,17 +8,23 @@ services:
     volumes:
       - esdata01:/usr/share/elasticsearch/data
     ports:
-      - 9200
+      - 19200:9200
     environment:
+      - ES_JAVA_OPTS=-Xmx2g -Xms2g
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
       - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=false
       - VIRTUAL_PORT=9200
       - VIRTUAL_PROTO=http
       - VIRTUAL_HOST=${ELASTIC_VIRTUAL_HOST}
       - LETSENCRYPT_HOST=${ELASTIC_VIRTUAL_HOST}
       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
-    mem_limit: ${MEM_LIMIT}
+    # mem_limit: ${MEM_LIMIT}
     ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
       memlock:
         soft: -1
         hard: -1

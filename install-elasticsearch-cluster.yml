@@ -1,0 +1,15 @@
+---
+- name: Deploy eslaticsearch-cluster service
+
+  hosts: all
+
+  become: true
+
+  vars_files:
+    - vars/common.yml
+    - vars/timezone.yml
+    - vars/elasticsearch.yml
+
+  tasks:
+    - import_tasks: tasks/elasticsearch-cluster/start.yml
+    - import_tasks: tasks/common/prune.yml
