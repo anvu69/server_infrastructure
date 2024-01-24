@@ -1,6 +1,6 @@
 ---
 elastic_password: password
 kibana_password: password
-stack_version: 8.11.3
+stack_version: 8.7.0
 elastic_virtual_host: elastic.example.com
 kibana_virtual_host: kibana.example.com
