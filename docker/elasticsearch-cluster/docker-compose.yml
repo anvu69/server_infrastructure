@@ -66,7 +66,7 @@ services:
     depends_on:
       setup:
         condition: service_healthy
-    image: anvu69/elasticsearch-vietnamese:8.7.0
+    image: anvu69/elasticsearch-vietnamese:${STACK_VERSION}
     container_name: es01
     volumes:
       - certs:/usr/share/elasticsearch/config/certs
@@ -114,7 +114,7 @@ services:
   es02:
     depends_on:
       - es01
-    image: anvu69/elasticsearch-vietnamese:8.7.0
+    image: anvu69/elasticsearch-vietnamese:${STACK_VERSION}
     container_name: es02
     volumes:
       - certs:/usr/share/elasticsearch/config/certs
@@ -154,7 +154,7 @@ services:
   es03:
     depends_on:
       - es02
-    image: anvu69/elasticsearch-vietnamese:8.7.0
+    image: anvu69/elasticsearch-vietnamese:${STACK_VERSION}
     container_name: es03
     volumes:
       - certs:/usr/share/elasticsearch/config/certs
