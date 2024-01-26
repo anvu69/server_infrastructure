@@ -70,7 +70,7 @@ services:
     container_name: es01
     volumes:
       - certs:/usr/share/elasticsearch/config/certs
-      - ./esdata01:/usr/share/elasticsearch/data
+      - esdata01:/usr/share/elasticsearch/data
     ports:
       - ${ES_PORT}:9200
     environment:
@@ -118,7 +118,7 @@ services:
     container_name: es02
     volumes:
       - certs:/usr/share/elasticsearch/config/certs
-      - ./esdata02:/usr/share/elasticsearch/data
+      - esdata02:/usr/share/elasticsearch/data
     environment:
       - node.name=es02
       - cluster.name=${CLUSTER_NAME}
@@ -158,7 +158,7 @@ services:
     container_name: es03
     volumes:
       - certs:/usr/share/elasticsearch/config/certs
-      - ./esdata03:/usr/share/elasticsearch/data
+      - esdata03:/usr/share/elasticsearch/data
     environment:
       - node.name=es03
       - cluster.name=${CLUSTER_NAME}
@@ -203,7 +203,7 @@ services:
     container_name: kibana
     volumes:
       - certs:/usr/share/kibana/config/certs
-      - ./kibanadata:/usr/share/kibana/data
+      - kibanadata:/usr/share/kibana/data
     ports:
       - ${KIBANA_PORT}:5601
     environment:
@@ -230,6 +230,14 @@ services:
 
 volumes:
   certs:
+    driver: local
+  esdata01:
+    driver: local
+  esdata02:
+    driver: local
+  esdata03:
+    driver: local
+  kibanadata:
     driver: local
 
 networks:
