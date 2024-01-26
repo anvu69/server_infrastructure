@@ -91,9 +91,6 @@ services:
       - JAVA_OPTS=-Dhazelcast.config=/config/hazelcast.xml
     networks:
       - default
-    # networks:
-    #   hc:
-    #     ipv4_address: 10.0.0.2
 
   hc2:
     image: hazelcast/hazelcast:3.12.5
@@ -115,9 +112,6 @@ services:
       - JAVA_OPTS=-Dhazelcast.config=/config/hazelcast.xml
     networks:
       - default
-  #   networks:
-  #     hc:
-  #       ipv4_address: 10.0.0.3
 
   hc3:
     image: hazelcast/hazelcast:3.12.5
@@ -139,11 +133,6 @@ services:
       - JAVA_OPTS=-Dhazelcast.config=/config/hazelcast.xml
     networks:
       - default
-  #   volumes:
-  #     - ./config:/config
-  #   networks:
-  #     hc:
-  #       ipv4_address: 10.0.0.4
 
   hc4:
     image: hazelcast/hazelcast:3.12.5
@@ -165,11 +154,6 @@ services:
       - JAVA_OPTS=-Dhazelcast.config=/config/hazelcast.xml
     networks:
       - default
-  #   volumes:
-  #     - ./config:/config
-  #   networks:
-  #     hc:
-  #       ipv4_address: 10.0.0.5
 
   hc5:
     image: hazelcast/hazelcast:3.12.5
@@ -191,11 +175,7 @@ services:
       - JAVA_OPTS=-Dhazelcast.config=/config/hazelcast.xml
     networks:
       - default
-  #   volumes:
-  #     - ./config:/config
-  #   networks:
-  #     hc:
-  #       ipv4_address: 10.0.0.6
+
   # management-center:
   #   image: hazelcast/management-center:3.12.5
   #   container_name: hmc
@@ -206,21 +186,3 @@ services:
   #     - JAVA_OPTS=-Dhazelcast.mc.disk.usage.mode=block -Dhazelcast.mc.disk.usage.limit=2GB
   #   networks:
   #     - default
-      # - MC_DEFAULT_CLUSTER=${CLUSTER_NAME}
-      # - MC_HEALTH_CHECK_ENABLE=true
-      # - MC_DEFAULT_CLUSTER_MEMBERS=hc1,hc2,hc3,hc4
-      # - MC_ADMIN_USER=${MC_ADMIN_USER}
-      # - MC_ADMIN_PASSWORD=${MC_ADMIN_PASSWORD}
-      # - VIRTUAL_PORT=8080
-      # - VIRTUAL_PROTO=http
-      # - VIRTUAL_HOST=${VIRTUAL_HOST}
-      # - LETSENCRYPT_HOST=${VIRTUAL_HOST}
-      # - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
-
-# networks:
-#   hc:
-#     driver: bridge
-#     ipam:
-#       config:
-#         - subnet: 10.0.0.0/16
-#           gateway: 10.0.0.1

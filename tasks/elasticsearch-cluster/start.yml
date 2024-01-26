@@ -23,4 +23,4 @@
     export LETSENCRYPT_EMAIL={{letsencrypt_email}}
     export LOG_MAX_SIZE={{log_max_size}}
     export LOG_MAX_FILE={{log_max_file}}
-    docker compose up -d --build
+    docker compose up -d
