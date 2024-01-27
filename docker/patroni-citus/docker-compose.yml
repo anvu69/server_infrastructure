@@ -1,0 +1,176 @@
+version: '3.8'
+
+networks:
+  default:
+    name: ${NETWORK:-nginx_proxy}
+    external: true
+
+x-env-share: &env-share
+  PATRONI_RESTAPI_USERNAME: ${PATRONI_RESTAPI_USERNAME:-admin}
+  PATRONI_RESTAPI_PASSWORD: ${PATRONI_RESTAPI_PASSWORD:-admin}
+  PATRONI_SUPERUSER_USERNAME: ${PATRONI_SUPERUSER_USERNAME:-postgres}
+  PATRONI_SUPERUSER_PASSWORD: ${PATRONI_SUPERUSER_PASSWORD:-postgres}
+  PATRONI_REPLICATION_USERNAME: ${PATRONI_REPLICATION_USERNAME:-replicator}
+  PATRONI_REPLICATION_PASSWORD: ${PATRONI_REPLICATION_PASSWORD:-replicate}
+  PATRONI_admin_PASSWORD: ${PATRONI_admin_PASSWORD:-admin}
+  PATRONI_admin_OPTIONS: ${PATRONI_admin_OPTIONS:-createdb,createrole}
+
+services:
+  etcd1: &etcd
+    image: anvu69/patroni-citus:3.2.2
+    environment:
+      ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+      ETCD_INITIAL_CLUSTER: etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+      ETCD_INITIAL_CLUSTER_STATE: new
+      ETCD_INITIAL_CLUSTER_TOKEN: tutorial
+      ETCD_UNSUPPORTED_ARCH: arm64
+    container_name: etcd1
+    volumes:
+      - ./ssl/ssl-cert-snakeoil.pem:/ssl/ssl-cert-snakeoil.pem
+      - ./ssl/ssl-cert-snakeoil.key:/ssl/ssl-cert-snakeoil.key
+      - ./ssl/ssl-cert-snakeoil.crt:/ssl/ssl-cert-snakeoil.crt
+    command: etcd --name etcd1 --initial-advertise-peer-urls http://etcd1:2380 && cat /ssl/ssl-cert-snakeoil.key > /etc/ssl/private/ssl-cert-snakeoil.key && cat /ssl/ssl-cert-snakeoil.pem > /etc/ssl/certs/ssl-cert-snakeoil.pem && cat /ssl/ssl-cert-snakeoil.crt > /etc/ssl/private/ssl-cert-snakeoil.crt
+
+  etcd2:
+    <<: *etcd
+    container_name: etcd2
+    command: etcd --name etcd2 --initial-advertise-peer-urls http://etcd2:2380 && cat /ssl/ssl-cert-snakeoil.key > /etc/ssl/private/ssl-cert-snakeoil.key && cat /ssl/ssl-cert-snakeoil.pem > /etc/ssl/certs/ssl-cert-snakeoil.pem && cat /ssl/ssl-cert-snakeoil.crt > /etc/ssl/private/ssl-cert-snakeoil.crt
+
+  etcd3:
+    <<: *etcd
+    container_name: etcd3
+    command: etcd --name etcd3 --initial-advertise-peer-urls http://etcd3:2380 && cat /ssl/ssl-cert-snakeoil.key > /etc/ssl/private/ssl-cert-snakeoil.key && cat /ssl/ssl-cert-snakeoil.pem > /etc/ssl/certs/ssl-cert-snakeoil.pem && cat /ssl/ssl-cert-snakeoil.crt > /etc/ssl/private/ssl-cert-snakeoil.crt
+
+  haproxy:
+    image: anvu69/patroni-citus:3.2.2
+    container_name: patroni-citus-haproxy
+    depends_on:
+      - etcd1
+      - etcd2
+      - etcd3
+    ports:
+      - '5000:5000' # Access to the coorinator primary
+      - '5001:5001' # Load-balancing across workers primaries
+      - '7000:7000' # stats
+    environment: &haproxy_env
+      <<: *env-share
+      ETCDCTL_ENDPOINTS: http://etcd1:2379,http://etcd2:2379,http://etcd3:2379
+      PATRONI_ETCD3_HOSTS: "'etcd1:2379','etcd2:2379','etcd3:2379'"
+      PATRONI_SCOPE: ${PATRONI_SCOPE:-demo}
+      PATRONI_CITUS_GROUP: 0
+      PATRONI_CITUS_DATABASE: citus
+      PGSSLMODE: verify-ca # PATRONI_REPLICATION_SSLMODE, PATRONI_SUPERUSER_SSLMODE
+      PGSSLKEY: /etc/ssl/private/ssl-cert-snakeoil.key # PATRONI_REPLICATION_SSLKEY, PATRONI_SUPERUSER_SSLKEY
+      PGSSLCERT: /etc/ssl/certs/ssl-cert-snakeoil.pem # PATRONI_REPLICATION_SSLCERT, PATRONI_SUPERUSER_SSLCERT
+      PGSSLROOTCERT: /etc/ssl/certs/ssl-cert-snakeoil.pem # PATRONI_REPLICATION_SSLROOTCERT, PATRONI_SUPERUSER_SSLROOTCERT
+    volumes:
+      - ./ssl/ssl-cert-snakeoil.pem:/ssl/ssl-cert-snakeoil.pem
+      - ./ssl/ssl-cert-snakeoil.key:/ssl/ssl-cert-snakeoil.key
+      - ./ssl/ssl-cert-snakeoil.crt:/ssl/ssl-cert-snakeoil.crt
+    command: haproxy && cat /ssl/ssl-cert-snakeoil.key > /etc/ssl/private/ssl-cert-snakeoil.key && cat /ssl/ssl-cert-snakeoil.pem > /etc/ssl/certs/ssl-cert-snakeoil.pem && cat /ssl/ssl-cert-snakeoil.crt > /etc/ssl/private/ssl-cert-snakeoil.crt
+
+  # Coordinator
+  coord1:
+    image: anvu69/patroni-citus:3.2.2
+    container_name: coord1
+    environment: &coord_env
+      <<: *haproxy_env
+      PATRONI_NAME: coord1
+      PATRONI_CITUS_GROUP: 0
+    volumes:
+      - ./ssl/ssl-cert-snakeoil.pem:/ssl/ssl-cert-snakeoil.pem
+      - ./ssl/ssl-cert-snakeoil.key:/ssl/ssl-cert-snakeoil.key
+      - ./ssl/ssl-cert-snakeoil.crt:/ssl/ssl-cert-snakeoil.crt
+      - coord1_data:/home/postgres
+    command: cat /ssl/ssl-cert-snakeoil.key > /etc/ssl/private/ssl-cert-snakeoil.key && cat /ssl/ssl-cert-snakeoil.pem > /etc/ssl/certs/ssl-cert-snakeoil.pem && cat /ssl/ssl-cert-snakeoil.crt > /etc/ssl/private/ssl-cert-snakeoil.crt
+
+  coord2:
+    image: anvu69/patroni-citus:3.2.2
+    container_name: coord2
+    environment:
+      <<: *coord_env
+      PATRONI_NAME: coord2
+    volumes:
+      - ./ssl/ssl-cert-snakeoil.pem:/ssl/ssl-cert-snakeoil.pem
+      - ./ssl/ssl-cert-snakeoil.key:/ssl/ssl-cert-snakeoil.key
+      - ./ssl/ssl-cert-snakeoil.crt:/ssl/ssl-cert-snakeoil.crt
+      - coord2_data:/home/postgres
+    command: cat /ssl/ssl-cert-snakeoil.key > /etc/ssl/private/ssl-cert-snakeoil.key && cat /ssl/ssl-cert-snakeoil.pem > /etc/ssl/certs/ssl-cert-snakeoil.pem && cat /ssl/ssl-cert-snakeoil.crt > /etc/ssl/private/ssl-cert-snakeoil.crt
+
+  coord3:
+    image: anvu69/patroni-citus:3.2.2
+    container_name: coord3
+    environment:
+      <<: *coord_env
+      PATRONI_NAME: coord3
+    volumes:
+      - ./ssl/ssl-cert-snakeoil.pem:/ssl/ssl-cert-snakeoil.pem
+      - ./ssl/ssl-cert-snakeoil.key:/ssl/ssl-cert-snakeoil.key
+      - ./ssl/ssl-cert-snakeoil.crt:/ssl/ssl-cert-snakeoil.crt
+      - coord3_data:/home/postgres
+    command: cat /ssl/ssl-cert-snakeoil.key > /etc/ssl/private/ssl-cert-snakeoil.key && cat /ssl/ssl-cert-snakeoil.pem > /etc/ssl/certs/ssl-cert-snakeoil.pem && cat /ssl/ssl-cert-snakeoil.crt > /etc/ssl/private/ssl-cert-snakeoil.crt
+
+  # Patroni + PostgreSQL + Citus worker nodes (two worker clusters with two nodes each)
+  work1-1:
+    image: anvu69/patroni-citus:3.2.2
+    container_name: work1-1
+    environment: &work1_env
+      <<: *haproxy_env
+      PATRONI_NAME: work1-1
+      PATRONI_CITUS_GROUP: 1
+    volumes:
+      - ./ssl/ssl-cert-snakeoil.pem:/ssl/ssl-cert-snakeoil.pem
+      - ./ssl/ssl-cert-snakeoil.key:/ssl/ssl-cert-snakeoil.key
+      - ./ssl/ssl-cert-snakeoil.crt:/ssl/ssl-cert-snakeoil.crt
+      - work11_data:/home/postgres
+    command: cat /ssl/ssl-cert-snakeoil.key > /etc/ssl/private/ssl-cert-snakeoil.key && cat /ssl/ssl-cert-snakeoil.pem > /etc/ssl/certs/ssl-cert-snakeoil.pem && cat /ssl/ssl-cert-snakeoil.crt > /etc/ssl/private/ssl-cert-snakeoil.crt
+
+  work1-2:
+    image: anvu69/patroni-citus:3.2.2
+    container_name: work1-2
+    environment:
+      <<: *work1_env
+      PATRONI_NAME: work1-2
+    volumes:
+      - ./ssl/ssl-cert-snakeoil.pem:/ssl/ssl-cert-snakeoil.pem
+      - ./ssl/ssl-cert-snakeoil.key:/ssl/ssl-cert-snakeoil.key
+      - ./ssl/ssl-cert-snakeoil.crt:/ssl/ssl-cert-snakeoil.crt
+      - work12_data:/home/postgres
+    command: cat /ssl/ssl-cert-snakeoil.key > /etc/ssl/private/ssl-cert-snakeoil.key && cat /ssl/ssl-cert-snakeoil.pem > /etc/ssl/certs/ssl-cert-snakeoil.pem && cat /ssl/ssl-cert-snakeoil.crt > /etc/ssl/private/ssl-cert-snakeoil.crt
+
+  work2-1:
+    image: anvu69/patroni-citus:3.2.2
+    container_name: work2-1
+    environment: &work2_env
+      <<: *haproxy_env
+      PATRONI_NAME: work2-1
+      PATRONI_CITUS_GROUP: 2
+    volumes:
+      - ./ssl/ssl-cert-snakeoil.pem:/ssl/ssl-cert-snakeoil.pem
+      - ./ssl/ssl-cert-snakeoil.key:/ssl/ssl-cert-snakeoil.key
+      - ./ssl/ssl-cert-snakeoil.crt:/ssl/ssl-cert-snakeoil.crt
+      - work21_data:/home/postgres
+    command: cat /ssl/ssl-cert-snakeoil.key > /etc/ssl/private/ssl-cert-snakeoil.key && cat /ssl/ssl-cert-snakeoil.pem > /etc/ssl/certs/ssl-cert-snakeoil.pem && cat /ssl/ssl-cert-snakeoil.crt > /etc/ssl/private/ssl-cert-snakeoil.crt
+
+  work2-2:
+    image: anvu69/patroni-citus:3.2.2
+    container_name: work2-2
+    environment:
+      <<: *work2_env
+      PATRONI_NAME: work2-2
+    volumes:
+      - ./ssl/ssl-cert-snakeoil.pem:/ssl/ssl-cert-snakeoil.pem
+      - ./ssl/ssl-cert-snakeoil.key:/ssl/ssl-cert-snakeoil.key
+      - ./ssl/ssl-cert-snakeoil.crt:/ssl/ssl-cert-snakeoil.crt
+      - work22_data:/home/postgres
+    command: cat /ssl/ssl-cert-snakeoil.key > /etc/ssl/private/ssl-cert-snakeoil.key && cat /ssl/ssl-cert-snakeoil.pem > /etc/ssl/certs/ssl-cert-snakeoil.pem && cat /ssl/ssl-cert-snakeoil.crt > /etc/ssl/private/ssl-cert-snakeoil.crt
+
+volumes:
+  coord1_data:
+  coord2_data:
+  coord3_data:
+  work11_data:
+  work12_data:
+  work21_data:
+  work22_data:
