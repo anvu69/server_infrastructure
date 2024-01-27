@@ -33,7 +33,7 @@
     <properties>
         <property name="hazelcast.tcp.join.port.try.count">3</property>
     </properties>
-    <management-center enabled="true">http://194.233.93.111:8080/hazelcast-mancenter</management-center>
+    <management-center enabled="true">http://hmc:8080/hazelcast-mancenter</management-center>
     <network>
         <port auto-increment="true" port-count="100">5701</port>
         <outbound-ports>
@@ -48,16 +48,15 @@
                 <multicast-group>224.2.2.3</multicast-group>
                 <multicast-port>54327</multicast-port>
             </multicast>
-            <tcp-ip enabled="true">
-                <member-list>
-                    <member>hc1:5701</member>
-                    <member>hc2:5701</member>
+            <tcp-ip enabled="false">
+                <interface>127.0.0.1</interface>
+                <!-- <member-list> -->
+                    <!-- <member>hc1:5701</member> -->
+                    <!-- <member>hc2:5701</member>
                     <member>hc3:5701</member>
                     <member>hc4:5701</member>
-                    <member>hc5:5701</member>
-                    <!--<member>123.31.29.145</member>-->
-                    <!-- <member>127.0.0.1</member> -->
-                </member-list>
+                    <member>hc5:5701</member> -->
+                <!-- </member-list> -->
             </tcp-ip>
             <aws enabled="false">
                 <access-key>my-access-key</access-key>
