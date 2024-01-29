@@ -13,7 +13,7 @@ x-env-share: &env-share
   PATRONI_REPLICATION_USERNAME: ${PATRONI_REPLICATION_USERNAME:-replicator}
   PATRONI_REPLICATION_PASSWORD: ${PATRONI_REPLICATION_PASSWORD:-replicate}
   PATRONI_admin_PASSWORD: ${PATRONI_admin_PASSWORD:-admin}
-  PATRONI_admin_OPTIONS: ${PATRONI_admin_OPTIONS:-createdb,createrole}
+  PATRONI_admin_OPTIONS: createdb,createrole
 
 services:
   etcd1: &etcd
@@ -27,6 +27,10 @@ services:
       ETCD_UNSUPPORTED_ARCH: arm64
     container_name: etcd1
     command: etcd --name etcd1 --initial-advertise-peer-urls http://etcd1:2380
+    logging:
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILE:-10}
 
   etcd2:
     <<: *etcd
@@ -46,7 +50,7 @@ services:
       - etcd2
       - etcd3
     ports:
-      - '5000:5000' # Access to the coorinator primary
+      - '${PORT:-5000}:5000' # Access to the coorinator primary
       - '5001:5001' # Load-balancing across workers primaries
       - '7000:7000' # stats
     environment: &haproxy_env
@@ -66,6 +70,10 @@ services:
       <<: *haproxy_env
       PATRONI_NAME: coord1
       PATRONI_CITUS_GROUP: 0
+    logging:
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILE:-10}
 
   coord2:
     image: anvu69/patroni-citus:3.2.2-no-ssl
@@ -73,6 +81,10 @@ services:
     environment:
       <<: *coord_env
       PATRONI_NAME: coord2
+    logging:
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILE:-10}
 
   coord3:
     image: anvu69/patroni-citus:3.2.2-no-ssl
@@ -80,6 +92,10 @@ services:
     environment:
       <<: *coord_env
       PATRONI_NAME: coord3
+    logging:
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILE:-10}
 
   # Patroni + PostgreSQL + Citus worker nodes (two worker clusters with two nodes each)
   work1-1:
@@ -89,6 +105,10 @@ services:
       <<: *haproxy_env
       PATRONI_NAME: work1-1
       PATRONI_CITUS_GROUP: 1
+    logging:
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILE:-10}
 
   work1-2:
     image: anvu69/patroni-citus:3.2.2-no-ssl
@@ -96,6 +116,10 @@ services:
     environment:
       <<: *work1_env
       PATRONI_NAME: work1-2
+    logging:
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILE:-10}
 
   work2-1:
     image: anvu69/patroni-citus:3.2.2-no-ssl
@@ -104,6 +128,10 @@ services:
       <<: *haproxy_env
       PATRONI_NAME: work2-1
       PATRONI_CITUS_GROUP: 2
+    logging:
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILE:-10}
 
   work2-2:
     image: anvu69/patroni-citus:3.2.2-no-ssl
@@ -111,6 +139,10 @@ services:
     environment:
       <<: *work2_env
       PATRONI_NAME: work2-2
+    logging:
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILE:-10}
 
 volumes:
   coord1_data:
