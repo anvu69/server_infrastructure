@@ -1,0 +1,5 @@
+---
+pre_shared_key: notasecret
+users: user_1:111111;user_2:222222
+server_mng_password: server_mng_password
+hub_mng_password: hub_mng_password

@@ -52,7 +52,7 @@ services:
     ports:
       - '${PORT:-5000}:5000' # Access to the coorinator primary
       - '5001:5001' # Load-balancing across workers primaries
-      - '7000:7000' # stats
+      - '7001:7000' # stats
     environment: &haproxy_env
       <<: *env-share
       ETCDCTL_ENDPOINTS: http://etcd1:2379,http://etcd2:2379,http://etcd3:2379

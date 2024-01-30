@@ -1,0 +1,22 @@
+---
+- name: Copy softether-vpn folder
+  copy:
+    src: ./docker/softether-vpn
+    dest: ~/docker
+    mode: 0755
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/softether-vpn
+    docker compose down
+
+- name: Start softether-vpn
+  shell: |
+    cd ~/docker/softether-vpn
+    export PSK={{pre_shared_key}}
+    export USERS={{users}}
+    export SPW={{server_mng_password}}
+    export HPW={{hub_mng_password}}
+    export LOG_MAX_SIZE={{log_max_size}}
+    export LOG_MAX_FILE={{log_max_file}}
+    docker compose up -d

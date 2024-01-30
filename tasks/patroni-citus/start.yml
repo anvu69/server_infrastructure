@@ -1,0 +1,28 @@
+---
+- name: Copy patroni-citus folder
+  copy:
+    src: ./docker/patroni-citus
+    dest: ~/docker
+    mode: 0755
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/patroni-citus
+    docker compose down
+
+- name: Start patroni-citus
+  shell: |
+    cd ~/docker/patroni-citus
+    export PATRONI_RESTAPI_USERNAME={{restapi_username}}
+    export PATRONI_RESTAPI_PASSWORD={{restapi_password}}
+    export PATRONI_SUPERUSER_USERNAME={{root_username}}
+    export PATRONI_SUPERUSER_PASSWORD={{root_password}}
+    export PATRONI_REPLICATION_USERNAME={{replication_username}}
+    export PATRONI_REPLICATION_PASSWORD={{replication_password}}
+    export PATRONI_admin_PASSWORD={{admin_password}}
+    export PORT={{port_export}}
+    export PATRONI_SCOPE={{scope}}
+    export NETWORK={{network}}
+    export LOG_MAX_SIZE={{log_max_size}}
+    export LOG_MAX_FILE={{log_max_file}}
+    docker compose up -d

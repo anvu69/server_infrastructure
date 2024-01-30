@@ -13,3 +13,5 @@ redis-rep.yml
 mysql-proxysql.yml
 hazelcast.yml
 rabbitmq-cluster.yml
+patroni-citus.yml
+softether-vpn.yml
