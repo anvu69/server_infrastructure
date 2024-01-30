@@ -1,0 +1,12 @@
+---
+- name: Deploy SoftEther VPN service
+
+  hosts: all
+
+  vars_files:
+    - vars/common.yml
+    - vars/softether-vpn.yml
+
+  tasks:
+    - import_tasks: tasks/softether-vpn/start.yml
+    - import_tasks: tasks/common/prune.yml

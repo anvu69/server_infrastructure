@@ -1,0 +1,11 @@
+---
+- name: Deploy PostgreSQL with Citus extension and Patroni template HA and load balancing with HAproxy service
+
+  hosts: all
+
+  vars_files:
+    - vars/common.yml
+    - vars/patroni-citus.yml
+
+  tasks:
+    - import_tasks: tasks/patroni-citus/start.yml

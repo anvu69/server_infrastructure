@@ -1,0 +1,25 @@
+version: "3"
+
+services:
+  app:
+    image: siomiz/softethervpn
+    container_name: softehervpn
+    volumes:
+      - ./vpn_server.config:/usr/vpnserver/vpn_server.config:rw
+    environment:
+      PSK: ${PSK:-notasecret}
+      USERS: ${USERS:-user_1:111111;user_2:222222}
+      SPW: ${SPW:-server_mng_password}
+      HPW: ${HPW:-hub_mng_password}
+    logging:
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILE:-10}
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - 500:500/udp
+      - 4500:4500/udp
+      - 1701:1701/tcp
+      - 5555:5555/tcp
+      - 992:992/tcp
