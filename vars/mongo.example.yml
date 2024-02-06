@@ -1,0 +1,4 @@
+---
+root_user: root
+root_password: password
+port_export: 27017

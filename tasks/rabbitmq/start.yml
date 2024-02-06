@@ -1,0 +1,21 @@
+---
+- name: Copy rabbitmq folder
+  copy:
+    src: ./docker/rabbitmq
+    dest: ~/docker
+    mode: 0755
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/rabbitmq
+    docker compose down
+
+- name: Start rabbitmq
+  shell: |
+    cd ~/docker/rabbitmq
+    export RABBITMQ_DEFAULT_USER={{user}}
+    export RABBITMQ_DEFAULT_PASS={{password}}
+    export RABBITMQ_DEFAULT_VHOST=/
+    export PORT={{port_export}}
+    export NETWORK={{network}}
+    docker compose up -d

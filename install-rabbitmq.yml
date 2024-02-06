@@ -1,0 +1,11 @@
+---
+- name: Deploy RabbitMQ service
+
+  hosts: all
+
+  vars_files:
+    - vars/common.yml
+    - vars/rabbitmq.yml
+
+  tasks:
+    - import_tasks: tasks/rabbitmq/start.yml

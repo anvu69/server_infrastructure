@@ -1,0 +1,13 @@
+---
+- name: Deploy Mongo service
+
+  hosts: all
+
+  vars_files:
+    - vars/common.yml
+    - vars/timezone.yml
+    - vars/mongo.yml
+
+  tasks:
+    - import_tasks: tasks/mongo/start.yml
+    - import_tasks: tasks/common/prune.yml

@@ -1,0 +1,23 @@
+---
+- name: Copy mongo folder
+  copy:
+    src: ./docker/mongo
+    dest: ~/docker
+    mode: 0755
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/mongo
+    docker compose down
+
+- name: Start mongo
+  shell: |
+    cd ~/docker/mongo
+    export TZ={{tz}}
+    export MONGO_INITDB_ROOT_USERNAME={{root_user}}
+    export MONGO_INITDB_ROOT_PASSWORD={{root_password}}
+    export PORT={{port_export}}
+    export NETWORK={{network}}
+    export LOG_MAX_SIZE={{log_max_size}}
+    export LOG_MAX_FILE={{log_max_file}}
+    docker compose up -d

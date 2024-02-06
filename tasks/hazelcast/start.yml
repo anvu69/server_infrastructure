@@ -1,0 +1,19 @@
+---
+- name: Copy hazelcast folder
+  copy:
+    src: ./docker/hazelcast
+    dest: ~/docker
+    mode: 0755
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/hazelcast
+    docker compose down
+
+- name: Start hazelcast
+  shell: |
+    cd ~/docker/hazelcast
+    export NETWORK={{network}}
+    export LOG_MAX_SIZE={{log_max_size}}
+    export LOG_MAX_FILE={{log_max_file}}
+    docker compose up -d

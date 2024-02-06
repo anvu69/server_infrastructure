@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  mongo:
+    container_name: mongo
+    restart: always
+    image: mongo:6
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-password}
+    ports:
+      - '${PORT:-27017}:27017'
+    volumes:
+      - ./data:/data/db
+    networks:
+      - default
+
+networks:
+  default:
+    name: ${NETWORK:-nginx_proxy}
+    external: true

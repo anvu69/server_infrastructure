@@ -15,3 +15,5 @@ hazelcast.yml
 rabbitmq-cluster.yml
 patroni-citus.yml
 softether-vpn.yml
+mongo.yml
+rabbitmq.yml
