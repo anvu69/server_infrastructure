@@ -1,0 +1,12 @@
+---
+- name: Deploy Hazelcast service
+
+  hosts: all
+
+  vars_files:
+    - vars/common.yml
+    - vars/timezone.yml
+
+  tasks:
+    - import_tasks: tasks/hazelcast/start.yml
+    - import_tasks: tasks/common/prune.yml

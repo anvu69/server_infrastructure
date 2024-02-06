@@ -1,0 +1,4 @@
+---
+user: admin
+password: admin
+port_export: 5672
