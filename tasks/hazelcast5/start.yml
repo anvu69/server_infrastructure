@@ -1,0 +1,25 @@
+---
+- name: Copy hazelcast5 folder
+  copy:
+    src: ./docker/hazelcast5
+    dest: ~/docker
+    mode: 0755
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/hazelcast5
+    docker compose down
+
+- name: Start hazelcast5
+  shell: |
+    cd ~/docker/hazelcast5
+    export IP="{{ansible_default_ipv4.address}}"
+    export CLUSTER_NAME={{cluster_name}}
+    export MC_ADMIN_USER={{username_admin_mc}}
+    export MC_ADMIN_PASSWORD={{password_admin_mc}}
+    export VIRTUAL_HOST={{virtual_host}}
+    export LETSENCRYPT_EMAIL={{letsencrypt_email}}
+    export NETWORK={{network}}
+    export LOG_MAX_SIZE={{log_max_size}}
+    export LOG_MAX_FILE={{log_max_file}}
+    docker compose up -d

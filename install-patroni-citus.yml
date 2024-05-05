@@ -1,6 +1,8 @@
 ---
 - name: Deploy PostgreSQL with Citus extension and Patroni template HA and load balancing with HAproxy service
 
+  become: true
+
   hosts: all
 
   vars_files:
