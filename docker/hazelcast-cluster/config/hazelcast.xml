@@ -54,7 +54,7 @@
                     <member>hc2:5701</member>
                     <member>hc3:5701</member>
                     <member>hc4:5701</member>
-                    <member>hc5:5701</member>
+                    <!-- <member>hc5:5701</member> -->
                 </member-list>
             </tcp-ip>
             <aws enabled="false">

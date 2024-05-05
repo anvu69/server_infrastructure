@@ -15,32 +15,48 @@ x-env-share: &env-share
   PATRONI_admin_PASSWORD: ${PATRONI_admin_PASSWORD:-admin}
   PATRONI_admin_OPTIONS: createdb,createrole
 
+x-env-etcd: &env-etdc-share
+  ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
+  ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+  ETCD_INITIAL_CLUSTER: etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+  ETCD_INITIAL_CLUSTER_STATE: new
+  ETCD_INITIAL_CLUSTER_TOKEN: tutorial
+  ETCD_UNSUPPORTED_ARCH: arm64
+
 services:
   etcd1: &etcd
     image: anvu69/patroni-citus:3.2.2-no-ssl
-    environment:
-      ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
-      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
-      ETCD_INITIAL_CLUSTER: etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
-      ETCD_INITIAL_CLUSTER_STATE: new
-      ETCD_INITIAL_CLUSTER_TOKEN: tutorial
-      ETCD_UNSUPPORTED_ARCH: arm64
+    environment: 
+      <<: *env-etdc-share
+      # PATRONI_POSTGRESQL_DATA_DIR: data/etdc1
     container_name: etcd1
     command: etcd --name etcd1 --initial-advertise-peer-urls http://etcd1:2380
     logging:
       options:
         max-size: ${LOG_MAX_SIZE:-10m}
         max-file: ${LOG_MAX_FILE:-10}
+    # volumes:
+    #   - ./etcd1_data:/home/postgres/etcd1.etcd
 
   etcd2:
     <<: *etcd
+    environment: 
+      <<: *env-etdc-share
+      # PATRONI_POSTGRESQL_DATA_DIR: data/etdc2
     container_name: etcd2
     command: etcd --name etcd2 --initial-advertise-peer-urls http://etcd2:2380
+    # volumes:
+    #   - ./etcd2_data:/home/postgres/etcd2.etcd
 
   etcd3:
     <<: *etcd
+    environment: 
+      <<: *env-etdc-share
+      # PATRONI_POSTGRESQL_DATA_DIR: data/etdc3
     container_name: etcd3
     command: etcd --name etcd3 --initial-advertise-peer-urls http://etcd3:2380
+    # volumes:
+    #   - ./etcd3_data:/home/postgres/etcd3.etcd
 
   haproxy:
     image: anvu69/patroni-citus:3.2.2-no-ssl
@@ -63,92 +79,95 @@ services:
     command: haproxy
 
   # Coordinator
-  coord1:
+  coord1: &coord-share
     image: anvu69/patroni-citus:3.2.2-no-ssl
     container_name: coord1
     environment: &coord_env
       <<: *haproxy_env
       PATRONI_NAME: coord1
       PATRONI_CITUS_GROUP: 0
+      # PATRONI_POSTGRESQL_DATA_DIR: data/coord1
+    # user: postgres
+    volumes:
+      - ./coord1_data:/home/postgres/data:Z
     logging:
       options:
         max-size: ${LOG_MAX_SIZE:-10m}
         max-file: ${LOG_MAX_FILE:-10}
 
   coord2:
-    image: anvu69/patroni-citus:3.2.2-no-ssl
+    <<: *coord-share
     container_name: coord2
     environment:
       <<: *coord_env
       PATRONI_NAME: coord2
-    logging:
-      options:
-        max-size: ${LOG_MAX_SIZE:-10m}
-        max-file: ${LOG_MAX_FILE:-10}
+      # PATRONI_POSTGRESQL_DATA_DIR: data/coord2
+    volumes:
+      - ./coord2_data:/home/postgres/data:Z
 
   coord3:
-    image: anvu69/patroni-citus:3.2.2-no-ssl
+    <<: *coord-share
     container_name: coord3
     environment:
       <<: *coord_env
       PATRONI_NAME: coord3
-    logging:
-      options:
-        max-size: ${LOG_MAX_SIZE:-10m}
-        max-file: ${LOG_MAX_FILE:-10}
+      # PATRONI_POSTGRESQL_DATA_DIR: data/coord3
+    volumes:
+      - ./coord3_data:/home/postgres/data:Z
 
   # Patroni + PostgreSQL + Citus worker nodes (two worker clusters with two nodes each)
-  work1-1:
+  work1-1: &work-share
     image: anvu69/patroni-citus:3.2.2-no-ssl
     container_name: work1-1
     environment: &work1_env
       <<: *haproxy_env
       PATRONI_NAME: work1-1
       PATRONI_CITUS_GROUP: 1
+      # PATRONI_POSTGRESQL_DATA_DIR: data/work11
+    # user: postgres
+    volumes:
+      - ./work11_data:/home/postgres/data:Z
     logging:
       options:
         max-size: ${LOG_MAX_SIZE:-10m}
         max-file: ${LOG_MAX_FILE:-10}
 
   work1-2:
-    image: anvu69/patroni-citus:3.2.2-no-ssl
+    <<: *work-share
     container_name: work1-2
     environment:
       <<: *work1_env
       PATRONI_NAME: work1-2
-    logging:
-      options:
-        max-size: ${LOG_MAX_SIZE:-10m}
-        max-file: ${LOG_MAX_FILE:-10}
+      # PATRONI_POSTGRESQL_DATA_DIR: data/work12
+    volumes:
+      - ./work12_data:/home/postgres/data:Z
 
   work2-1:
-    image: anvu69/patroni-citus:3.2.2-no-ssl
+    <<: *work-share
     container_name: work2-1
     environment: &work2_env
       <<: *haproxy_env
       PATRONI_NAME: work2-1
       PATRONI_CITUS_GROUP: 2
-    logging:
-      options:
-        max-size: ${LOG_MAX_SIZE:-10m}
-        max-file: ${LOG_MAX_FILE:-10}
+      # PATRONI_POSTGRESQL_DATA_DIR: data/work21
+    volumes:
+      - ./work21_data:/home/postgres/data:Z
 
   work2-2:
-    image: anvu69/patroni-citus:3.2.2-no-ssl
+    <<: *work-share
     container_name: work2-2
     environment:
       <<: *work2_env
       PATRONI_NAME: work2-2
-    logging:
-      options:
-        max-size: ${LOG_MAX_SIZE:-10m}
-        max-file: ${LOG_MAX_FILE:-10}
+      # PATRONI_POSTGRESQL_DATA_DIR: data/work22
+    volumes:
+      - ./work22_data:/home/postgres/data:Z
 
-volumes:
-  coord1_data:
-  coord2_data:
-  coord3_data:
-  work11_data:
-  work12_data:
-  work21_data:
-  work22_data:
+# volumes:
+#   coord1_data:
+#   coord2_data:
+#   coord3_data:
+#   work11_data:
+#   work12_data:
+#   work21_data:
+#   work22_data:

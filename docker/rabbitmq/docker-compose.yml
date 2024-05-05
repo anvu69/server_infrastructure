@@ -11,6 +11,7 @@ services:
       - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_DEFAULT_VHOST}
     ports:
       - '${PORT:-5672}:5672'
+      - 15673:15672
     networks:
       - default
 

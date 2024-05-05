@@ -1,0 +1,6 @@
+---
+username_admin_mc: admin
+password_admin_mc: admin
+cluster_name: admin
+virtual_host: example.com
+letsencrypt_email: abc@gmail.com

@@ -17,3 +17,4 @@ patroni-citus.yml
 softether-vpn.yml
 mongo.yml
 rabbitmq.yml
+hazelcast5.yml

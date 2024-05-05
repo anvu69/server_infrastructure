@@ -1,0 +1,71 @@
+version: '3.8'
+
+networks:
+  default:
+    name: ${NETWORK:-nginx_proxy}
+    external: true
+
+services:
+  hc51:
+    image: hazelcast/hazelcast:5.3
+    container_name: hc51
+    restart: always
+    hostname: hc51
+    ports:
+      - 15701:5701
+    volumes:
+      - ./hc1:/opt/hazelcast/persistence
+    environment:
+      - HZ_NETWORK_PUBLICADDRESS=${IP:-0.0.0.0}:5701
+      - HZ_CLUSTERNAME=${CLUSTER_NAME}
+  # hc2:
+  #   image: hazelcast/hazelcast:5.3-slim
+  #   container_name: hc2
+  #   restart: always
+  #   hostname: hc2
+  #   ports:
+  #     - 5702:5701
+  #   volumes:
+  #     - ./hc2:/opt/hazelcast/persistence
+  #   environment:
+  #     - HZ_NETWORK_PUBLICADDRESS=${IP:-0.0.0.0}:5702
+  #     - HZ_CLUSTERNAME=${CLUSTER_NAME}
+  # hc3:
+  #   image: hazelcast/hazelcast:5.3-slim
+  #   container_name: hc3
+  #   restart: always
+  #   hostname: hc3
+  #   ports:
+  #     - 5703:5701
+  #   environment:
+  #     - HZ_NETWORK_PUBLICADDRESS=${IP:-0.0.0.0}:5703
+  #     - HZ_CLUSTERNAME=${CLUSTER_NAME}
+  # hc4:
+  #   image: hazelcast/hazelcast:5.3-slim
+  #   container_name: hc4
+  #   restart: always
+  #   hostname: hc4
+  #   ports:
+  #     - 5704:5701
+  #   volumes:
+  #     - ./hc4:/opt/hazelcast/persistence
+  #   environment:
+  #     - HZ_NETWORK_PUBLICADDRESS=${IP:-0.0.0.0}:5704
+  #     - HZ_CLUSTERNAME=${CLUSTER_NAME}
+  management-center:
+    image: hazelcast/management-center:5.3
+    container_name: management-center
+    restart: always
+    ports:
+      - 8080
+    environment:
+      - MC_DEFAULT_CLUSTER=${CLUSTER_NAME}
+      - MC_HEALTH_CHECK_ENABLE=true
+      - MC_DEFAULT_CLUSTER_MEMBERS=hc51
+      - MC_ADMIN_USER=${MC_ADMIN_USER}
+      - MC_ADMIN_PASSWORD=${MC_ADMIN_PASSWORD}
+      - VIRTUAL_PORT=8080
+      - VIRTUAL_PROTO=http
+      - VIRTUAL_HOST=${VIRTUAL_HOST}
+      - LETSENCRYPT_HOST=${VIRTUAL_HOST}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
