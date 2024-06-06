@@ -7,7 +7,7 @@ networks:
 
 x-service-common: &service-common
   restart: always
-  image: mongo:6
+  image: mongo:6.0.12
   networks:
     - default
 

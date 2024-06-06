@@ -19,3 +19,7 @@ update global_variables set variable_value="8.0.4 (ProxySQL)" where variable_nam
 load mysql variables to run;
 save mysql variables to disk;
 ```
+
+```
+mysql -uroot -pMHMN3gZn5zYsWHO
+```
