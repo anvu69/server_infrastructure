@@ -2,4 +2,4 @@
 - name: Post install
   shell: |
     sleep 5
-    docker exec -it proxysql bash -c mysql -h proxysql -P6032 -uradmin -pradmin -e "update global_variables set variable_value='false' where variable_name='admin-hash_passwords';" -e "load admin variables to runtime; save admin variables to disk;" -e "load mysql users to runtime; save mysql users to disk;" -e "update global_variables set variable_value='8.0.4 (ProxySQL)' where variable_name='mysql-server_version';" -e "load mysql variables to run;" -e "save mysql variables to disk;"
+    docker exec -it proxysql bash -c mysql -h proxysql -P6032 -uradmin -pradmin -e "update global_variables set variable_value='false' where variable_name='admin-hash_passwords';" -e "load admin variables to runtime; save admin variables to disk;" -e "load mysql users to runtime; save mysql users to disk;"
