@@ -12,11 +12,19 @@ services:
       - MYSQL_DATABASE=${MYSQL_DATABASE:-db}
       - MYSQL_USER=${MYSQL_USER:-user1}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-simpl3}
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+      memlock:
+        soft: -1
+        hard: -1
     command:
       [
         'mysqld',
         '--character-set-server=utf8mb4',
-        '--collation-server=utf8mb4_bin'
+        '--collation-server=utf8mb4_bin',
+        '--performance_schema=0'
       ]
     volumes:
       - ./mysql_data:/var/lib/mysql

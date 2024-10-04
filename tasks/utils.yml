@@ -4,3 +4,6 @@
 
 - name: Install net-tools
   command: yum install -y net-tools
+
+- name: Install wget
+  command: dnf install -y wget

@@ -1,0 +1,48 @@
+---
+- name: Copy novu folder
+  copy:
+    src: ./docker/novu
+    dest: ~/docker
+    mode: 0755
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/novu
+    docker compose down
+
+- name: Start novu
+  shell: |
+    cd ~/docker/novu
+    export JWT_SECRET={{jwt_secret}}
+    export STORE_ENCRYPTION_KEY={{store_encryption_key}}
+    export NODE_ENV=production
+    export MONGO_MAX_POOL_SIZE=200
+    export MONGO_MIN_POOL_SIZE=100
+    export MONGO_URL={{mongo_url}}
+    export REDIS_HOST={{redis_host}}
+    export REDIS_PORT={{redis_port}}
+    export REDIS_CACHE_SERVICE_HOST={{redis_host}}
+    export REDIS_CACHE_SERVICE_PORT={{redis_port}}
+    export S3_LOCAL_STACK={{s3_local_stack}}
+    export S3_BUCKET_NAME={{s3_bucket_name}}
+    export S3_REGION={{s3_region}}
+    export AWS_ACCESS_KEY_ID={{aws_access_key_id}}
+    export AWS_SECRET_ACCESS_KEY={{aws_secret_access_key}}
+    export API_PORT={{api_port}}
+    export WS_PORT={{ws_port}}
+    export REACT_APP_WS_URL=https://{{ws_host}}
+    export REACT_APP_API_URL=https://{{api_host}}
+    export API_ROOT_URL=https://{{api_host}}
+    export DISABLE_USER_REGISTRATION=true
+    export FRONT_BASE_URL=https://{{dash_host}}
+    export WIDGET_EMBED_PATH=https://{{widget_embeb_host}}/embed.umd.min.js
+    export WIDGET_URL=https://{{widget_host}}
+    export IS_MULTI_TENANCY_ENABLED=true
+    export API_VIRTUAL_HOST={{api_host}}
+    export WS_VIRTUAL_HOST={{ws_host}}
+    export DASH_VIRTUAL_HOST={{dash_host}}
+    export WIDGET_VIRTUAL_HOST={{widget_host}}
+    export EMBED_VIRTUAL_HOST={{widget_embeb_host}}
+    export NETWORK={{network}}
+    export LETSENCRYPT_EMAIL={{letsencrypt_email}}
+    docker compose up -d

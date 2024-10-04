@@ -1,0 +1,10 @@
+---
+version: 25.0.0
+db_url: jdbc:postgresql://patroni-citus-haproxy:5000/keycloak
+db_username: dev
+db_password: dev
+realm_name: dev
+admin_username: admin
+admin_password: admin
+secret: secret
+host: auth.domain.com

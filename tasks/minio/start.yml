@@ -1,0 +1,23 @@
+---
+- name: Copy minio folder
+  copy:
+    src: ./docker/minio
+    dest: ~/docker
+    mode: 0755
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/minio
+    docker compose down
+
+- name: Start minio
+  shell: |
+    cd ~/docker/minio
+    export MINIO_ROOT_USER={{username}}
+    export MINIO_ROOT_PASSWORD={{password}}
+    export VIRTUAL_HOST={{virtual_host}}
+    export LETSENCRYPT_EMAIL={{letsencrypt_email}}
+    export NETWORK={{network}}
+    export LOG_MAX_SIZE={{log_max_size}}
+    export LOG_MAX_FILE={{log_max_file}}
+    docker compose up -d

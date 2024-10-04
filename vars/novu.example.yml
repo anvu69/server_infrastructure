@@ -1,0 +1,18 @@
+---
+jwt_secret: jwt_secret
+store_encryption_key: store_encryption_key
+mongo_url: mongodb://root:password@router:27017/novu?authSource=admin
+redis_host: r-proxy
+redis_port: 16379
+s3_local_stack: http://minio_s3:9000
+s3_bucket_name: novu-s3
+s3_region: server
+aws_access_key_id: aws
+aws_secret_access_key: aws
+api_port: 3000
+ws_port: 3002
+ws_host: nv-ws.domain.com
+api_host: nv-api.domain.com
+dash_host: nv-dash.domain.com
+widget_embeb_host: nv-embed.domain.com
+widget_host: nv-widget.domain.com
