@@ -26,7 +26,7 @@ x-env-etcd: &env-etdc-share
 services:
   etcd1: &etcd
     image: anvu69/patroni-citus:3.2.2-no-ssl
-    environment: 
+    environment:
       <<: *env-etdc-share
       # PATRONI_POSTGRESQL_DATA_DIR: data/etdc1
     container_name: etcd1
@@ -40,7 +40,7 @@ services:
 
   etcd2:
     <<: *etcd
-    environment: 
+    environment:
       <<: *env-etdc-share
       # PATRONI_POSTGRESQL_DATA_DIR: data/etdc2
     container_name: etcd2
@@ -50,7 +50,7 @@ services:
 
   etcd3:
     <<: *etcd
-    environment: 
+    environment:
       <<: *env-etdc-share
       # PATRONI_POSTGRESQL_DATA_DIR: data/etdc3
     container_name: etcd3
@@ -86,10 +86,10 @@ services:
       <<: *haproxy_env
       PATRONI_NAME: coord1
       PATRONI_CITUS_GROUP: 0
-      # PATRONI_POSTGRESQL_DATA_DIR: data/coord1
+      PATRONI_POSTGRESQL_DATA_DIR: /home/postgres/data
     # user: postgres
     volumes:
-      - ./coord1_data:/home/postgres/data:Z
+      - ./coord1_data:/home/postgres/data
     logging:
       options:
         max-size: ${LOG_MAX_SIZE:-10m}
@@ -101,9 +101,9 @@ services:
     environment:
       <<: *coord_env
       PATRONI_NAME: coord2
-      # PATRONI_POSTGRESQL_DATA_DIR: data/coord2
+      PATRONI_POSTGRESQL_DATA_DIR: /home/postgres/data
     volumes:
-      - ./coord2_data:/home/postgres/data:Z
+      - ./coord2_data:/home/postgres/data
 
   coord3:
     <<: *coord-share
@@ -111,9 +111,9 @@ services:
     environment:
       <<: *coord_env
       PATRONI_NAME: coord3
-      # PATRONI_POSTGRESQL_DATA_DIR: data/coord3
+      PATRONI_POSTGRESQL_DATA_DIR: /home/postgres/data
     volumes:
-      - ./coord3_data:/home/postgres/data:Z
+      - ./coord3_data:/home/postgres/data
 
   # Patroni + PostgreSQL + Citus worker nodes (two worker clusters with two nodes each)
   work1-1: &work-share
@@ -123,10 +123,10 @@ services:
       <<: *haproxy_env
       PATRONI_NAME: work1-1
       PATRONI_CITUS_GROUP: 1
-      # PATRONI_POSTGRESQL_DATA_DIR: data/work11
+      PATRONI_POSTGRESQL_DATA_DIR: /home/postgres/data
     # user: postgres
     volumes:
-      - ./work11_data:/home/postgres/data:Z
+      - ./work11_data:/home/postgres/data
     logging:
       options:
         max-size: ${LOG_MAX_SIZE:-10m}
@@ -138,9 +138,9 @@ services:
     environment:
       <<: *work1_env
       PATRONI_NAME: work1-2
-      # PATRONI_POSTGRESQL_DATA_DIR: data/work12
+      PATRONI_POSTGRESQL_DATA_DIR: /home/postgres/data
     volumes:
-      - ./work12_data:/home/postgres/data:Z
+      - ./work12_data:/home/postgres/data
 
   work2-1:
     <<: *work-share
@@ -149,9 +149,9 @@ services:
       <<: *haproxy_env
       PATRONI_NAME: work2-1
       PATRONI_CITUS_GROUP: 2
-      # PATRONI_POSTGRESQL_DATA_DIR: data/work21
+      PATRONI_POSTGRESQL_DATA_DIR: /home/postgres/data
     volumes:
-      - ./work21_data:/home/postgres/data:Z
+      - ./work21_data:/home/postgres/data
 
   work2-2:
     <<: *work-share
@@ -159,9 +159,9 @@ services:
     environment:
       <<: *work2_env
       PATRONI_NAME: work2-2
-      # PATRONI_POSTGRESQL_DATA_DIR: data/work22
+      PATRONI_POSTGRESQL_DATA_DIR: /home/postgres/data
     volumes:
-      - ./work22_data:/home/postgres/data:Z
+      - ./work22_data:/home/postgres/data
 
 # volumes:
 #   coord1_data:

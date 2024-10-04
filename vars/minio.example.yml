@@ -1,0 +1,5 @@
+---
+username: admin
+password: admin
+virtual_host: s3-dash.domain.com
+letsencrypt_email: dev@mail.com

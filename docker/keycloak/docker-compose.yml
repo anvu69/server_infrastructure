@@ -1,0 +1,50 @@
+version: '3.8'
+services:
+  keycloak:
+    # restart: always
+    image: anvu69/keycloak-apple-identity-provider:${VERSION:-25.0}
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    container_name: keycloak
+    ports:
+      - 8080
+    networks:
+      - default
+    command: start
+    environment:
+      - KC_HOSTNAME_STRICT=false
+      - KC_PROXY=edge
+      - KC_HTTP_ENABLED=true
+      - KC_HOSTNAME_STRICT_HTTPS=false
+      - KC_METRICS_ENABLED=true
+      - KC_HEALTH_ENABLED=true
+      - KC_TRANSACTION_XA_ENABLED=false
+      - KC_LOG_LEVEL=INFO
+      - KC_LOG_CONSOLE_COLOR=true
+      - KC_DB=postgres
+      - KC_DB_URL=${KC_DB_URL}
+      - KC_DB_USERNAME=${KC_DB_USERNAME}
+      - KC_DB_PASSWORD=${KC_DB_PASSWORD}
+      - KC_REALM_NAME=${KC_REALM_NAME}
+      - KC_FEATURES=hostname:v2,js-adapter,admin-api,admin2,account-api,account3,authorization,docker,token-exchange
+      - KC_HOSTNAME=${VIRTUAL_HOST}
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+      - KEYCLOAK_SECRET=${KEYCLOAK_SECRET}
+      - VIRTUAL_PORT=8080
+      - VIRTUAL_HOST=${VIRTUAL_HOST}
+      - LETSENCRYPT_HOST=${VIRTUAL_HOST}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    volumes:
+      - ./.keycloak/providers:/opt/keycloak/providers
+      - ./themes:/opt/keycloak/providers/
+    logging:
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILE:-10}
+
+networks:
+  default:
+    name: nginx_proxy
+    external: true

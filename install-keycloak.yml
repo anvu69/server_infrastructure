@@ -1,0 +1,12 @@
+---
+- name: Deploy keycloak service
+
+  hosts: all
+
+  vars_files:
+    - vars/common.yml
+    - vars/keycloak.yml
+
+  tasks:
+    - import_tasks: tasks/keycloak/start.yml
+    # - import_tasks: tasks/common/prune.yml

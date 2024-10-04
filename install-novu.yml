@@ -1,0 +1,13 @@
+---
+- name: Deploy novu service
+
+  hosts: all
+
+  vars_files:
+    - vars/common.yml
+    - vars/timezone.yml
+    - vars/novu.yml
+
+  tasks:
+    - import_tasks: tasks/novu/start.yml
+    # - import_tasks: tasks/common/prune.yml

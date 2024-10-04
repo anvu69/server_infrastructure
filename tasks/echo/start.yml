@@ -1,0 +1,19 @@
+---
+- name: Copy echo folder
+  copy:
+    src: ./docker/echo
+    dest: ~/docker
+    mode: 0755
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/echo
+    docker compose down
+
+- name: Start echo
+  shell: |
+    cd ~/docker/echo
+    export VIRTUAL_HOST={{echo_host}}
+    export LETSENCRYPT_EMAIL={{letsencrypt_email}}
+    export NETWORK={{network}}
+    docker compose up -d

@@ -1,0 +1,6 @@
+---
+username_admin_mc: admin
+password_admin_mc: admin
+cluster_name: dev
+virtual_host: hmc.domain.com
+letsencrypt_email: dev@mail.com

@@ -1,0 +1,3 @@
+---
+host: supabase.domain.com
+log_host: log-supabase.domain.com

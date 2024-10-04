@@ -18,3 +18,8 @@ softether-vpn.yml
 mongo.yml
 rabbitmq.yml
 hazelcast5.yml
+echo.yml
+hazelcast5-cluster.yml
+keycloak.yml
+minio.yml
+novu.yml

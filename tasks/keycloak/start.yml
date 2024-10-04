@@ -1,0 +1,29 @@
+---
+- name: Copy keycloak folder
+  copy:
+    src: ./docker/keycloak
+    dest: ~/docker
+    mode: 0755
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/keycloak
+    docker compose down
+
+- name: Start keycloak
+  shell: |
+    cd ~/docker/keycloak
+    export VERSION={{version}}
+    export KC_DB_URL={{db_url}}
+    export KC_DB_USERNAME={{db_username}}
+    export KC_DB_PASSWORD={{db_password}}
+    export KC_REALM_NAME={{realm_name}}
+    export KEYCLOAK_ADMIN={{admin_username}}
+    export KEYCLOAK_ADMIN_PASSWORD={{admin_password}}
+    export KEYCLOAK_SECRET={{secret}}
+    export NETWORK={{network}}
+    export LETSENCRYPT_EMAIL={{letsencrypt_email}}
+    export VIRTUAL_HOST={{host}}
+    export LOG_MAX_SIZE={{log_max_size}}
+    export LOG_MAX_FILE={{log_max_file}}
+    docker compose up --pull=always -d

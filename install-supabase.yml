@@ -1,0 +1,14 @@
+---
+- name: Deploy supabase service
+
+  hosts: all
+
+  become: true
+
+  vars_files:
+    - vars/common.yml
+    - vars/supabase.yml
+
+  tasks:
+    - import_tasks: tasks/supabase/start.yml
+    - import_tasks: tasks/common/prune.yml
