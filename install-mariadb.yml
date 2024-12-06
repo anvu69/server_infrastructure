@@ -1,0 +1,13 @@
+---
+- name: Deploy mariadb service
+
+  hosts: all
+
+  vars_files:
+    # - vars/common.yml
+    - vars/timezone.yml
+  #   - vars/mysql5_7.yml
+
+  tasks:
+    - import_tasks: tasks/mariadb_phpmyadmin/start.yml
+    - import_tasks: tasks/common/prune.yml

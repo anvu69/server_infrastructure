@@ -1,0 +1,48 @@
+services:
+  db-backup:
+    container_name: db-backup
+    image: tiredofit/db-backup
+    volumes:
+      - ./backups:/backup
+      - ./logs:/logs
+      #- ./post-script.sh:/assets/custom-scripts/post-script.sh
+    environment:
+      - TIMEZONE=${TZ}
+      - CONTAINER_NAME=db-backup
+      - CONTAINER_ENABLE_MONITORING=FALSE
+      - DEFAULT_RESOURCE_OPTIMIZED=TRUE
+      # - DEBUG_MODE=TRUE
+
+      - BACKUP_JOB_CONCURRENCY=${BACKUP_JOB_CONCURRENCY}
+      - DEFAULT_CHECKSUM=NONE
+      - DEFAULT_BACKUP_LOCATION=S3
+      - DEFAULT_COMPRESSION=GZ
+      - DEFAULT_GZ_RSYNCABLE=TRUE
+      - DEFAULT_BACKUP_INTERVAL=1440
+      - DEFAULT_BACKUP_BEGIN=0500
+      - DEFAULT_CLEANUP_TIME=43200
+      - DEFAULT_S3_BUCKET=${S3_BUCKET}
+      - DEFAULT_S3_KEY_ID=${S3_KEY_ID}
+      - DEFAULT_S3_KEY_SECRET=${S3_KEY_SECRET}
+      - DEFAULT_S3_HOST=${S3_HOST}
+      - DEFAULT_S3_PATH=${S3_PATH}
+
+      - DB01_TYPE=mariadb
+      - DB01_HOST=${DB_HOST}
+      - DB01_PORT=${DB_PORT}
+      - DB01_NAME=${DB_NAME}
+      - DB01_USER=${DB_USER}
+      - DB01_PASS=${DB_PASS}
+
+    restart: always
+    logging:
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILE:-10}
+    networks:
+      - default
+
+networks:
+  default:
+    name: ${NETWORK:-nginx_proxy}
+    external: true
