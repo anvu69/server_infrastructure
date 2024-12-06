@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  browserless:
+    image: ghcr.io/browserless/chromium
+    container_name: browserless
+    environment:
+      - CONCURRENT=10
+      - TIMEOUT=60000
+      - QUEUED=10
+      - CORS=true
+      - HEALTH=true
+    ports:
+      - ${PORT:-3000}:3000
+    logging:
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILE:-10}
+    networks:
+      - default
+
+networks:
+  default:
+    name: ${NETWORK:-nginx_proxy}
+    external: true

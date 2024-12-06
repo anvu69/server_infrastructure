@@ -1,0 +1,15 @@
+---
+- name: Deploy docker-db-backup service
+
+  hosts: all
+
+  become: true
+
+  vars_files:
+    - vars/common.yml
+    - vars/timezone.yml
+    - vars/docker-db-backup.yml
+
+  tasks:
+    - import_tasks: tasks/docker-db-backup/start.yml
+    - import_tasks: tasks/common/prune.yml

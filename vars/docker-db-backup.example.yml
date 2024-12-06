@@ -1,0 +1,13 @@
+---
+backup_job_concurrency: 1
+s3_bucket: bucket
+s3_key_id: keyid
+s3_key_secret: keysecret
+s3_region: region
+s3_host: host
+s3_path: path
+db_host: db_host
+db_port: 3306
+db_name: mysql
+db_user: root
+db_pass: root

@@ -1,3 +1,4 @@
 galaxy/
 hosts*
 .env*
+mariadb_phpmyadmin/

@@ -2,7 +2,7 @@ version: '3.8'
 services:
   keycloak:
     # restart: always
-    image: anvu69/keycloak-apple-identity-provider:${VERSION:-25.0}
+    image: quay.io/keycloak/keycloak:${VERSION:-25.0}
     # build:
     #   context: .
     #   dockerfile: Dockerfile
@@ -37,8 +37,7 @@ services:
       - LETSENCRYPT_HOST=${VIRTUAL_HOST}
       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
     volumes:
-      - ./.keycloak/providers:/opt/keycloak/providers
-      - ./themes:/opt/keycloak/providers/
+      - ./providers:/opt/keycloak/providers
     logging:
       options:
         max-size: ${LOG_MAX_SIZE:-10m}

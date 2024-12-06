@@ -1,0 +1,12 @@
+---
+- name: Deploy browserless service
+
+  hosts: all
+
+  vars_files:
+    - vars/common.yml
+    - vars/browserless.yml
+
+  tasks:
+    - import_tasks: tasks/browserless/start.yml
+    - import_tasks: tasks/common/prune.yml
