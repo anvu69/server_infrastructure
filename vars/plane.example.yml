@@ -1,0 +1,69 @@
+---
+# Release tag of the Plane self-hosted stack (see https://github.com/makeplane/plane/releases)
+app_release: v1.4.1
+
+# Public entrypoint, served through nginx-proxy + acme-companion
+virtual_host: plane.domain.com
+# Overrides the placeholder in vars/common.yml — Let's Encrypt sends expiry notices here
+letsencrypt_email: admin@domain.com
+# web_url: https://plane.domain.com            # defaults to https://{{virtual_host}}
+# cors_allowed_origins: https://plane.domain.com
+
+# Generate with: openssl rand -hex 32
+secret_key: change-this-key-on-deployment
+live_server_secret_key: change-this-key-on-deployment
+
+debug: 0
+file_size_limit: 5242880
+gunicorn_workers: 1
+api_key_rate_limit: 60/minute
+authentication_rate_limit: 10/minute
+
+# Replicas per service
+web_replicas: 1
+space_replicas: 1
+admin_replicas: 1
+api_replicas: 1
+worker_replicas: 1
+beat_worker_replicas: 1
+live_replicas: 1
+
+# Postgres — bundled plane-db by default.
+# Point at an external cluster (e.g. patroni-citus-haproxy:5000) and comment out
+# the plane-db service in docker/plane/docker-compose.yml to use it instead.
+pg_host: plane-db
+pg_port: 5432
+pg_database: plane
+pg_user: plane
+pg_password: plane
+# database_url: postgresql://plane:plane@plane-db:5432/plane   # derived from the values above
+
+# Redis / Valkey — bundled plane-redis by default
+redis_host: plane-redis
+redis_port: 6379
+# redis_url: redis://plane-redis:6379/
+
+# RabbitMQ — bundled plane-mq by default
+rabbitmq_host: plane-mq
+rabbitmq_port: 5672
+rabbitmq_user: plane
+rabbitmq_password: plane
+rabbitmq_vhost: plane
+# amqp_url: amqp://plane:plane@plane-mq:5672/plane
+
+# Object storage — bundled plane-minio by default.
+# For an external S3, set use_minio: 0 and fill in the AWS_* values.
+use_minio: 1
+aws_region: ""
+aws_access_key_id: access-key
+aws_secret_access_key: secret-key
+aws_s3_endpoint_url: http://plane-minio:9000
+aws_s3_bucket_name: uploads
+minio_endpoint_ssl: 0
+
+# Webhook SSRF allowlists (comma separated), empty by default
+webhook_allowed_ips: ""
+webhook_allowed_hosts: ""
+
+# The bundled Caddy proxy sits behind nginx-proxy
+trusted_proxies: 0.0.0.0/0

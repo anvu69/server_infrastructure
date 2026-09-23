@@ -1,4 +1,37 @@
 galaxy/
-hosts*
 .env*
 mariadb_phpmyadmin/
+/scripts/
+*.swp
+plane-import-state.json
+
+# Legacy flat vars: superseded by inventories/. Nothing here is committed.
+vars/*.yml
+!vars/*.example.yml
+
+# Host addresses come from a local, uncommitted overlay that Ansible merges
+# into the inventory directory, so a public clone never says where prod lives.
+inventories/*/hosts.local.yml
+
+# Deny-by-default inventory. A misnamed file is simply not committed.
+inventories/*/group_vars/**
+inventories/*/host_vars/**
+!inventories/*/group_vars/
+!inventories/*/host_vars/
+!inventories/*/group_vars/**/
+!inventories/*/host_vars/**/
+!inventories/*/group_vars/**/main.yml
+!inventories/*/group_vars/**/vault.yml
+!inventories/*/host_vars/**/main.yml
+!inventories/*/host_vars/**/vault.yml
+
+# Real cli-proxy-api config holds live API keys; only the template is committed.
+docker/cliproxyapi/config.yaml
+
+# Real haproxy config holds live stats/Patroni REST API credentials; only the template is committed.
+docker/patroni-citus/configs/haproxy.cfg
+
+# Working notes from the planning tool. They quote decrypted vault values
+# verbatim, so they must never be committed. Previously ignored only via
+# .git/info/exclude, which is local to one clone and travels with nothing.
+.superpowers/
