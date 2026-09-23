@@ -13,8 +13,8 @@
 - name: Start rabbitmq-cluster
   shell: |
     cd ~/docker/rabbitmq-cluster
-    export RABBITMQ_DEFAULT_USER={{user}}
-    export RABBITMQ_DEFAULT_PASS={{password}}
+    export RABBITMQ_DEFAULT_USER={{rabbitmq_cluster_user}}
+    export RABBITMQ_DEFAULT_PASS={{rabbitmq_cluster_password}}
     export RABBITMQ_DEFAULT_VHOST=/
     export NETWORK={{network}}
     docker compose up -d

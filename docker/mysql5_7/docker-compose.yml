@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   mysql5_7:
     image: mysql:5.7
@@ -24,7 +22,17 @@ services:
         'mysqld',
         '--character-set-server=utf8mb4',
         '--collation-server=utf8mb4_bin',
-        '--performance_schema=0'
+        '--performance_schema=0',
+        '--innodb-buffer-pool-size=1G',
+        '--innodb-log-file-size=256M',
+        '--innodb-flush-method=O_DIRECT',
+        '--innodb-flush-log-at-trx-commit=2',
+        '--innodb-file-per-table=1',
+        '--max-connections=1000',
+        '--query-cache-size=0',
+        '--query-cache-type=0',
+        '--skip-name-resolve',
+        '--skip-host-cache'
       ]
     volumes:
       - ./mysql_data:/var/lib/mysql

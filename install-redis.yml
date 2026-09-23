@@ -1,11 +1,7 @@
 ---
 - name: Deploy Redis service
-
   hosts: all
-
-  vars_files:
-    - vars/common.yml
-
+  roles:
+    - redis
   tasks:
-    - import_tasks: tasks/redis/start.yml
     - import_tasks: tasks/common/prune.yml

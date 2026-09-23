@@ -1,0 +1,96 @@
+---
+- name: Create MySQL cluster directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  with_items:
+    - "{{ mysql_cluster_dir }}/master/data"
+    - "{{ mysql_cluster_dir }}/master/conf.d"
+    - "{{ mysql_cluster_dir }}/master/init"
+    - "{{ mysql_cluster_dir }}/master/logs"
+    - "{{ mysql_cluster_dir }}/proxysql/data"
+    - "{{ mysql_cluster_dir }}/proxysql/config"
+    - "{{ mysql_cluster_dir }}/orchestrator/config"
+    - "{{ mysql_cluster_dir }}/keepalived/config"
+
+- name: Create MySQL slave directories
+  file:
+    path: "{{ mysql_cluster_dir }}/slave{{ item.0 }}/{{ item.1 }}"
+    state: directory
+    mode: '0755'
+  with_nested:
+    - "{{ range(1, mysql_slave_count | int + 1) | list }}"
+    - ['conf.d', 'data', 'logs']
+
+- name: Create MySQL master configuration file
+  template:
+    src: templates/mysql-cluster/master.cnf.j2
+    dest: "{{ mysql_cluster_dir }}/master/conf.d/my.cnf"
+    mode: '0644'
+
+- name: Copy MySQL slave configuration
+  template:
+    src: templates/mysql-cluster/slave.cnf.j2
+    dest: "{{ mysql_cluster_dir }}/slave{{ item }}/conf.d/my.cnf"
+    mode: '0644'
+  loop: "{{ range(1, mysql_slave_count | int + 1) | list }}"
+
+- name: Create ProxySQL configuration file
+  template:
+    src: templates/mysql-cluster/proxysql.cnf.j2
+    dest: "{{ mysql_cluster_dir }}/proxysql/config/proxysql.cnf"
+    mode: '0644'
+
+- name: Create Keepalived configuration file
+  template:
+    src: templates/mysql-cluster/keepalived.conf.j2
+    dest: "{{ mysql_cluster_dir }}/keepalived/config/keepalived.conf"
+    mode: '0644'
+
+- name: Create docker-compose.yml file
+  template:
+    src: templates/mysql-cluster/docker-compose.yml.j2
+    dest: "{{ mysql_cluster_dir }}/docker-compose.yml"
+    mode: '0644'
+
+- name: Create .env file
+  template:
+    src: templates/mysql-cluster/env.j2
+    dest: "{{ mysql_cluster_dir }}/.env"
+    mode: '0644'
+
+- name: Start MySQL cluster
+  shell: |
+    cd {{ mysql_cluster_dir }}
+    docker compose up -d
+  register: docker_compose_result
+
+- name: Wait for MySQL master to start
+  wait_for:
+    host: "{{ docker_compose_result.stdout_lines | regex_search('mysql-master.*Up') | first | regex_replace('.*mysql-master.*', 'localhost') }}"
+    port: 3306
+    timeout: 300
+    delay: 10
+
+- name: Wait for MySQL slaves to start
+  wait_for:
+    host: "{{ docker_compose_result.stdout_lines | regex_search('mysql-slave' + item|string + '.*Up') | first | regex_replace('.*mysql-slave' + item|string + '.*', 'localhost') }}"
+    port: 3306
+    timeout: 300
+    delay: 10
+  with_sequence: start=1 end="{{ mysql_slave_count }}"
+
+- name: Wait for ProxySQL to start
+  wait_for:
+    host: "{{ docker_compose_result.stdout_lines | regex_search('proxysql.*Up') | first | regex_replace('.*proxysql.*', 'localhost') }}"
+    port: 6033
+    timeout: 300
+    delay: 10
+
+- name: Wait for Orchestrator to start
+  wait_for:
+    host: "{{ docker_compose_result.stdout_lines | regex_search('orchestrator.*Up') | first | regex_replace('.*orchestrator.*', 'localhost') }}"
+    port: 3000
+    timeout: 300
+    delay: 10 

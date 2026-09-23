@@ -1,0 +1,11 @@
+---
+- name: Install cliproxyapi
+
+  hosts: all
+
+  become: true
+
+  tasks:
+    - import_tasks: tasks/cliproxyapi/build-config.yml
+    - import_tasks: tasks/cliproxyapi/start.yml
+    - import_tasks: tasks/common/prune.yml

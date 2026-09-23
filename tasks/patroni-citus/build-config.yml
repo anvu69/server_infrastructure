@@ -1,0 +1,18 @@
+---
+- name: Copy patroni-citus folder
+  copy:
+    src: ./docker/patroni-citus
+    dest: /docker
+    mode: 0755
+
+- name: Ensure patroni-citus deploy directory exists
+  file:
+    path: "/docker/patroni-citus/configs"
+    state: directory
+    mode: "0750"
+
+- name: Render haproxy config
+  template:
+    src: ../../templates/patroni-citus/haproxy.cfg.j2
+    dest: "/docker/patroni-citus/configs/haproxy.cfg"
+    mode: "0600"

@@ -1,0 +1,1 @@
+odoo -i base --without-demo=all --database <DB_NAME> --stop-after-init --db_host=postgres --db_user <DB_USER> --db_password <DB_PASSWORD>

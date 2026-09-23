@@ -37,7 +37,7 @@ services:
       - ${NGINX_FILES_PATH:-./data}/certs:/etc/nginx/certs:rw
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
-      - DEFAULT_EMAIL=anvn@vgroup.vn
+      - DEFAULT_EMAIL=example@mail.com
     logging:
       driver: ${NGINX_LETSENCRYPT_LOG_DRIVER:-json-file}
       options:

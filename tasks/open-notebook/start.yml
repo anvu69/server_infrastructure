@@ -1,0 +1,23 @@
+---
+- name: Copy open-notebook folder
+  copy:
+    src: ./docker/open-notebook
+    dest: ~/docker
+    mode: 0755
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/open-notebook
+    docker compose down
+
+- name: Start services
+  shell: |
+    cd ~/docker/open-notebook
+    export OPEN_NOTEBOOK_ENCRYPTION_KEY={{open_notebook_encryption_key}}
+    export OPEN_NOTEBOOK_PASSWORD={{open_notebook_password}}
+    export SURREAL_PASSWORD={{surreal_password}}
+    export VIRTUAL_HOST={{open_notebook_virtual_host}}
+    export API_VIRTUAL_HOST={{open_notebook_api_virtual_host}}
+    export NETWORK={{network}}
+    export LETSENCRYPT_EMAIL={{common_letsencrypt_email}}
+    docker compose up -d

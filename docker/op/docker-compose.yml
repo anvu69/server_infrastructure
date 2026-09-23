@@ -1,0 +1,227 @@
+networks:
+  op-internal:
+    driver: bridge
+  default:
+    name: ${NETWORK:-nginx_proxy}
+    external: true
+
+services:
+  op-db:
+    image: postgres:14-alpine
+    restart: always
+    volumes:
+      - ./op-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - op-internal
+    # Uncomment to expose ports
+    # ports:
+    #   - 5432:5432
+  
+  op-kv:
+    image: redis:7.2.5-alpine
+    restart: always
+    volumes:
+      - ./op-kv-data:/data
+    command: ["redis-server", "--maxmemory-policy", "noeviction"]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - op-internal
+    # Uncomment to expose ports
+    # ports:
+    #   - 6379:6379
+  
+  op-ch:
+    image: clickhouse/clickhouse-server:25.10.2.65
+    restart: always
+    volumes:
+      - ./op-ch-data:/var/lib/clickhouse
+      - ./clickhouse/clickhouse-config.xml:/etc/clickhouse-server/config.d/op-config.xml:ro
+      - ./clickhouse/clickhouse-user-config.xml:/etc/clickhouse-server/users.d/op-user-config.xml:ro
+      - ./clickhouse/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+    environment:
+      - CLICKHOUSE_SKIP_USER_SETUP=1
+    healthcheck:
+      test: ["CMD-SHELL", 'clickhouse-client --query "SELECT 1"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - op-internal
+  
+  op-api:
+    image: lindesvard/openpanel-api:2
+    restart: always
+    command: >
+      sh -c "
+        echo 'Running migrations...'
+        CI=true pnpm -r run migrate:deploy
+
+        pnpm start
+      "
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/healthcheck || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      op-db:
+        condition: service_healthy
+      op-ch:
+        condition: service_healthy
+      op-kv:
+        condition: service_healthy
+    # env_file:
+    #   - .env
+    environment:
+      # --- Nginx Proxy & Let's Encrypt cho API ---
+      - VIRTUAL_HOST=${API_VIRTUAL_HOST}
+      - VIRTUAL_PORT=${API_VIRTUAL_PORT:-3000}
+      - LETSENCRYPT_HOST=${API_VIRTUAL_HOST}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL:-your-email@gmail.com}
+      
+      # --- OpenPanel Core Envs ---
+      - NODE_ENV=production
+      - SELF_HOSTED=${SELF_HOSTED}
+      - BATCH_SIZE=10000
+      - BATCH_INTERVAL=30000
+      
+      # --- Database Connections ---
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@op-db:5432/postgres
+      - DATABASE_URL_DIRECT=postgresql://postgres:${POSTGRES_PASSWORD}@op-db:5432/postgres
+      - CLICKHOUSE_URL=http://op-ch:8123
+      - REDIS_URL=redis://op-kv:6379
+      
+      # --- Secrets & URLs ---
+      - COOKIE_SECRET=${COOKIE_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
+      - API_URL=https://${API_VIRTUAL_HOST}
+      - DASHBOARD_URL=https://${DASHBOARD_VIRTUAL_HOST}
+      - API_CORS_ORIGINS=https://${DASHBOARD_VIRTUAL_HOST},http://localhost:3000,https://javbla.com
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    networks:
+      - op-internal
+      - default
+  
+  op-worker:
+    image: lindesvard/openpanel-worker:2
+    restart: always
+    depends_on:
+      op-api:
+        condition: service_healthy
+    # env_file:
+    #   - .env
+    environment:
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@op-db:5432/postgres
+      - DATABASE_URL_DIRECT=postgresql://postgres:${POSTGRES_PASSWORD}@op-db:5432/postgres
+      - CLICKHOUSE_URL=http://op-ch:8123
+      - REDIS_URL=redis://op-kv:6379
+      - BATCH_SIZE=5000
+      - BATCH_INTERVAL=10000
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/healthcheck || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      mode: replicated
+      replicas: ${OP_WORKER_REPLICAS:-2}
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "30m"
+        max-file: "3"
+    networks:
+      - op-internal
+  
+  op-dashboard:
+    image: lindesvard/openpanel-dashboard:2
+    restart: always
+    depends_on:
+      op-api:
+        condition: service_healthy
+    # env_file:
+    #   - .env
+    environment:
+      - NODE_ENV=production
+      - SELF_HOSTED=${SELF_HOSTED}
+      - VIRTUAL_HOST=${DASHBOARD_VIRTUAL_HOST}
+      - VIRTUAL_PORT=${DASHBOARD_VIRTUAL_PORT:-3000}
+      - LETSENCRYPT_HOST=${DASHBOARD_VIRTUAL_HOST}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL:-your-email@gmail.com}
+      # --- App Configs ---
+      # - NEXTAUTH_URL=https://${DASHBOARD_VIRTUAL_HOST}
+      - API_URL=https://${API_VIRTUAL_HOST}
+      # - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - ALLOW_REGISTRATION=${ALLOW_REGISTRATION}
+      - ALLOW_INVITATION=${ALLOW_INVITATION}
+      - API_CORS_ORIGINS=https://${DASHBOARD_VIRTUAL_HOST},http://localhost:3000,https://javbla.com
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -f http://localhost:3000/api/healthcheck || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+    networks:
+      - default
+
+  # op-proxy:
+  #   image: caddy:2-alpine
+  #   container_name: op-proxy
+  #   restart: always
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - op-proxy-data:/data
+  #     - op-proxy-config:/config
+  #     - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+  #   depends_on:
+  #     op-dashboard:
+  #       condition: service_healthy
+  #     op-api:
+  #       condition: service_healthy
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"

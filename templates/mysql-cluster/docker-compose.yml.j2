@@ -1,0 +1,141 @@
+version: '3.8'
+
+x-mysql-slave: &mysql-slave
+  image: mysql:5.7
+  restart: always
+  networks:
+    - default
+  deploy:
+    resources:
+      limits:
+        cpus: '2'
+        memory: 4G
+      reservations:
+        cpus: '1'
+        memory: 2G
+
+services:
+  mysql-master:
+    image: mysql:5.7
+    container_name: mysql-master
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=***REMOVED***
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-mydb}
+      - MYSQL_USER=${MYSQL_USER:-user}
+      - MYSQL_PASSWORD=***REMOVED***
+    volumes:
+      - ./master/data:/var/lib/mysql
+      - ./master/logs:/var/log/mysql
+    networks:
+      - default
+    command: ["mysqld", "--server-id=1", "--log-bin=mysql-bin", "--binlog-format=ROW", "--gtid-mode=ON", "--enforce-gtid-consistency=ON"]
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+
+{% for i in range(1, mysql_slave_count | int + 1) %}
+  mysql-slave{{ i }}:
+    <<: *mysql-slave
+    container_name: mysql-slave{{ i }}
+    environment:
+      - MYSQL_ROOT_PASSWORD=***REMOVED***
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-mydb}
+      - MYSQL_USER=${MYSQL_USER:-user}
+      - MYSQL_PASSWORD=***REMOVED***
+    volumes:
+      - ./slave{{ i }}/data:/var/lib/mysql
+      - ./slave{{ i }}/logs:/var/log/mysql
+    # command: --server-id={{ i + 1 }} --log-bin=mysql-bin --binlog-format=ROW --gtid-mode=ON --enforce-gtid-consistency=ON
+{% endfor %}
+
+  proxysql:
+    image: proxysql/proxysql
+    container_name: proxysql
+    restart: always
+    volumes:
+      - type: bind
+        source: ./proxysql/data
+        target: /var/lib/proxysql
+      - type: bind
+        source: ./proxysql/config
+        target: /etc/proxysql
+    ports:
+      - "${PROXYSQL_PORT:-6033}:6033"
+      - "${PROXYSQL_ADMIN_PORT:-6032}:6032"
+    networks:
+      - default
+    depends_on:
+      - mysql-master
+{% for i in range(1, mysql_slave_count | int + 1) %}
+      - mysql-slave{{ i }}
+{% endfor %}
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  orchestrator:
+    image: openarkcode/orchestrator:latest
+    container_name: orchestrator
+    restart: always
+    environment:
+      - ORCHESTRATOR_DB_HOST=mysql-master
+      - ORCHESTRATOR_DB_PORT=3306
+      - ORCHESTRATOR_DB_USER=orchestrator
+      - ORCHESTRATOR_DB_PASSWORD=***REMOVED***
+    volumes:
+      - type: bind
+        source: ./orchestrator/config
+        target: /etc/orchestrator
+    ports:
+      - "${ORCHESTRATOR_PORT:-3000}:3000"
+    networks:
+      - default
+    depends_on:
+      - mysql-master
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  keepalived:
+    image: osixia/keepalived:latest
+    container_name: keepalived
+    restart: always
+    cap_add:
+      - NET_ADMIN
+      - NET_BROADCAST
+      - NET_RAW
+    volumes:
+      - type: bind
+        source: ./keepalived/config
+        target: /etc/keepalived
+    networks:
+      - default
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.2'
+          memory: 128M
+
+networks:
+  default:
+    external: true
+    name: ${DOCKER_NETWORK:-nginx_proxy} 

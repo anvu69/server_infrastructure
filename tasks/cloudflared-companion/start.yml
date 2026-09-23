@@ -1,0 +1,34 @@
+---
+- name: Copy Cloudflared Companion folder
+  copy:
+    src: ./docker/cloudflared-companion
+    dest: ~/docker
+    mode: 0755
+
+- name: Login container registry
+  shell: |
+    export CR_PAT={{github_personal_token}}
+    echo $CR_PAT | docker login ghcr.io -u {{github_user}} --password-stdin
+
+- name: Pull image cloudflared-companion
+  shell: |
+    docker pull ghcr.io/***REMOVED***/cloudflared-companion:latest
+
+- name: Đảm bảo các network riêng biệt cho mỗi account tồn tại
+  shell: docker network create "cloudflare-{{ item.name }}-net" || true
+  loop: "{{ cloudflare_accounts }}" # Lặp qua tất cả accounts
+
+- name: Create docker-compose.yml
+  template:
+    src: templates/cloudflared-companion/docker-compose.yml.j2
+    dest: ~/docker/cloudflared-companion/docker-compose.yml
+
+- name: Stop Cloudflared Companion
+  shell: |
+    cd ~/docker/cloudflared-companion
+    docker compose down
+
+- name: Start Cloudflared Companion
+  shell: |
+    cd ~/docker/cloudflared-companion
+    docker compose up -d

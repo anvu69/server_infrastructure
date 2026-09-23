@@ -1,0 +1,252 @@
+# Production-oriented Citus/Patroni compose based on docker-compose-citus.yml.
+#
+# External client flow:
+#   app -> pgbouncer:${PGBOUNCER_PORT:-26432} -> haproxy:5000 -> current Citus coordinator primary
+#
+# Host bind mounts are used for PostgreSQL and etcd data. On a real AlmaLinux server,
+# put PATRONI_DATA_DIR and ETCD_DATA_DIR on fast local SSD/NVMe storage.
+#
+# Build the Patroni/Citus image first, for example:
+#   docker build -f Dockerfile.citus -t ***REMOVED***/patroni-citus:4.1.3 .
+#
+# Generate TLS files before first startup and place them in ${PATRONI_SSL_DIR:-./runtime/ssl}:
+#   ca.crt, server.crt, server.key, server.pem
+
+x-etcd-env: &etcd-env
+  ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
+  ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+  ETCD_INITIAL_CLUSTER: etcd1=http://etcd1:2380,etcd2=http://etcd2:2380,etcd3=http://etcd3:2380
+  ETCD_INITIAL_CLUSTER_STATE: new
+  ETCD_INITIAL_CLUSTER_TOKEN: ${ETCD_INITIAL_CLUSTER_TOKEN:-citus-cluster}
+  ETCD_QUOTA_BACKEND_BYTES: "8589934592"
+  ETCD_MAX_REQUEST_BYTES: "33554432"
+
+x-cluster-env: &cluster-env
+  PATRONI_SCOPE: ${PATRONI_SCOPE:-demo}
+  PATRONI_NAMESPACE: ${PATRONI_NAMESPACE:-/service}
+  PATRONI_ETCD3_HOSTS: etcd1:2379,etcd2:2379,etcd3:2379
+  PATRONI_RESTAPI_USERNAME: ${PATRONI_RESTAPI_USERNAME:-admin}
+  PATRONI_RESTAPI_PASSWORD: ${PATRONI_RESTAPI_PASSWORD}
+  PATRONI_SUPERUSER_USERNAME: ${PATRONI_SUPERUSER_USERNAME:-postgres}
+  PATRONI_SUPERUSER_PASSWORD: ${PATRONI_SUPERUSER_PASSWORD}
+  PATRONI_REPLICATION_USERNAME: ${PATRONI_REPLICATION_USERNAME:-replicator}
+  PATRONI_REPLICATION_PASSWORD: ${PATRONI_REPLICATION_PASSWORD}
+  PATRONI_REWIND_USERNAME: ${PATRONI_REWIND_USERNAME:-rewind_user}
+  PATRONI_REWIND_PASSWORD: ${PATRONI_REWIND_PASSWORD}
+  PATRONI_REPLICATION_SSLMODE: verify-ca
+  PATRONI_REPLICATION_SSLKEY: /etc/postgresql/certs/server.key
+  PATRONI_REPLICATION_SSLCERT: /etc/postgresql/certs/server.crt
+  PATRONI_REPLICATION_SSLROOTCERT: /etc/postgresql/certs/ca.crt
+  PATRONI_SUPERUSER_SSLMODE: verify-ca
+  PATRONI_SUPERUSER_SSLKEY: /etc/postgresql/certs/server.key
+  PATRONI_SUPERUSER_SSLCERT: /etc/postgresql/certs/server.crt
+  PATRONI_SUPERUSER_SSLROOTCERT: /etc/postgresql/certs/ca.crt
+  PATRONI_REWIND_SSLMODE: verify-ca
+  PATRONI_REWIND_SSLKEY: /etc/postgresql/certs/server.key
+  PATRONI_REWIND_SSLCERT: /etc/postgresql/certs/server.crt
+  PATRONI_REWIND_SSLROOTCERT: /etc/postgresql/certs/ca.crt
+
+x-patroni-entrypoint: &patroni-entrypoint
+  - /bin/sh
+  - -ec
+  - |
+    if [ -f /a.tar.xz ]; then
+      sudo tar xpJf /a.tar.xz -C / >/dev/null 2>&1
+      sudo rm /a.tar.xz
+      sudo ln -snf dash /bin/sh
+    fi
+    exec dumb-init python3 /patroni.py /etc/patroni
+
+x-patroni-service: &patroni-service
+  image: ${PATRONI_TEST_IMAGE:-***REMOVED***/patroni-citus:4.1.3}
+  entrypoint: *patroni-entrypoint
+  restart: unless-stopped
+  networks:
+    - citus
+  depends_on:
+    - etcd1
+    - etcd2
+    - etcd3
+  environment:
+    <<: *cluster-env
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -U $${PATRONI_SUPERUSER_USERNAME:-postgres} || exit 1"]
+    interval: 10s
+    timeout: 5s
+    retries: 12
+    start_period: 60s
+
+networks:
+  citus:
+    name: patroni_citus
+    driver: bridge
+
+services:
+  etcd1:
+    image: ${PATRONI_TEST_IMAGE:-***REMOVED***/patroni-citus:4.1.3}
+    container_name: citus-etcd1
+    hostname: etcd1
+    restart: unless-stopped
+    networks: [citus]
+    environment: *etcd-env
+    command: etcd --name etcd1 --data-dir /var/lib/etcd --initial-advertise-peer-urls http://etcd1:2380
+    volumes:
+      - ${ETCD_DATA_DIR:-./runtime/etcd}/etcd1:/var/lib/etcd:Z
+
+  etcd2:
+    image: ${PATRONI_TEST_IMAGE:-***REMOVED***/patroni-citus:4.1.3}
+    container_name: citus-etcd2
+    hostname: etcd2
+    restart: unless-stopped
+    networks: [citus]
+    environment: *etcd-env
+    command: etcd --name etcd2 --data-dir /var/lib/etcd --initial-advertise-peer-urls http://etcd2:2380
+    volumes:
+      - ${ETCD_DATA_DIR:-./runtime/etcd}/etcd2:/var/lib/etcd:Z
+
+  etcd3:
+    image: ${PATRONI_TEST_IMAGE:-***REMOVED***/patroni-citus:4.1.3}
+    container_name: citus-etcd3
+    hostname: etcd3
+    restart: unless-stopped
+    networks: [citus]
+    environment: *etcd-env
+    command: etcd --name etcd3 --data-dir /var/lib/etcd --initial-advertise-peer-urls http://etcd3:2380
+    volumes:
+      - ${ETCD_DATA_DIR:-./runtime/etcd}/etcd3:/var/lib/etcd:Z
+
+  haproxy:
+    image: ${PATRONI_TEST_IMAGE:-***REMOVED***/patroni-citus:4.1.3}
+    container_name: citus-haproxy
+    hostname: haproxy
+    restart: unless-stopped
+    networks: [citus]
+    depends_on:
+      - etcd1
+      - etcd2
+      - etcd3
+      - coord1
+      - coord2
+      - coord3
+      - work1-1
+      - work1-2
+      - work2-1
+      - work2-2
+    command: haproxy
+    environment:
+      <<: *cluster-env
+      ETCDCTL_ENDPOINTS: http://etcd1:2379,http://etcd2:2379,http://etcd3:2379
+      PATRONI_CITUS_GROUP: 0
+    ports:
+      - "${HAPROXY_BIND:-127.0.0.1}:${HAPROXY_COORDINATOR_PORT:-15437}:5000"
+      - "${HAPROXY_BIND:-127.0.0.1}:${HAPROXY_WORKERS_PORT:-16491}:5001"
+      - "${HAPROXY_BIND:-127.0.0.1}:${HAPROXY_STATS_PORT:-19083}:7000"
+    volumes:
+      - ${PATRONI_SSL_DIR:-./runtime/ssl}/ca.crt:/etc/ssl/certs/ssl-cert-snakeoil.pem:ro,z
+      - ${PATRONI_SSL_DIR:-./runtime/ssl}/server.key:/etc/ssl/private/ssl-cert-snakeoil.key:ro,z
+      - ${PATRONI_SSL_DIR:-./runtime/ssl}/server.pem:/etc/ssl/private/ssl-cert-snakeoil.crt:ro,z
+      - ${PATRONI_HAPROXY_TEMPLATE_DIR:-./runtime/haproxy}/haproxy-citus.tmpl:/etc/confd/templates/haproxy.tmpl:ro,z
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5000 -U $${PATRONI_SUPERUSER_USERNAME:-postgres} -d $${PATRONI_CITUS_DATABASE:-citus} || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 90s
+
+  pgbouncer:
+    image: ${PGBOUNCER_IMAGE:-edoburu/pgbouncer:v1.25.2-p0}
+    container_name: citus-pgbouncer
+    hostname: pgbouncer
+    restart: unless-stopped
+    networks: [citus]
+    depends_on:
+      - haproxy
+    environment:
+      DB_HOST: haproxy
+      DB_PORT: "5000"
+      DB_USER: ${PGBOUNCER_DB_USER:-postgres}
+      DB_PASSWORD: ${PATRONI_SUPERUSER_PASSWORD}
+      DB_NAME: ${PATRONI_CITUS_DATABASE:-citus}
+      AUTH_TYPE: scram-sha-256
+      POOL_MODE: session
+      MAX_CLIENT_CONN: "1000"
+      DEFAULT_POOL_SIZE: "80"
+      RESERVE_POOL_SIZE: "20"
+      SERVER_TLS_SSLMODE: verify-ca
+      SERVER_TLS_CA_FILE: /etc/postgresql/certs/ca.crt
+      IGNORE_STARTUP_PARAMETERS: extra_float_digits,options
+    ports:
+      - "${PGBOUNCER_BIND:-0.0.0.0}:${PGBOUNCER_PORT:-26432}:5432"
+    volumes:
+      - ${PATRONI_SSL_DIR:-./runtime/ssl}:/etc/postgresql/certs:ro,z
+      - ${PATRONI_PGBOUNCER_CONFIG_DIR:-./runtime/pgbouncer}/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro,z
+
+  coord1:
+    <<: *patroni-service
+    container_name: citus-coord1
+    hostname: coord1
+    volumes:
+      - ./config/patroni/00-base.yml:/etc/patroni/00-base.yml:ro,z
+      - ./config/patroni/nodes/coord1.yml:/etc/patroni/10-node.yml:ro,z
+      - ${PATRONI_SSL_DIR:-./runtime/ssl}:/etc/postgresql/certs:ro,z
+      - ${PATRONI_DATA_DIR:-./runtime/data}/coord1:/home/postgres/data:Z
+
+  coord2:
+    <<: *patroni-service
+    container_name: citus-coord2
+    hostname: coord2
+    volumes:
+      - ./config/patroni/00-base.yml:/etc/patroni/00-base.yml:ro,z
+      - ./config/patroni/nodes/coord2.yml:/etc/patroni/10-node.yml:ro,z
+      - ${PATRONI_SSL_DIR:-./runtime/ssl}:/etc/postgresql/certs:ro,z
+      - ${PATRONI_DATA_DIR:-./runtime/data}/coord2:/home/postgres/data:Z
+
+  coord3:
+    <<: *patroni-service
+    container_name: citus-coord3
+    hostname: coord3
+    volumes:
+      - ./config/patroni/00-base.yml:/etc/patroni/00-base.yml:ro,z
+      - ./config/patroni/nodes/coord3.yml:/etc/patroni/10-node.yml:ro,z
+      - ${PATRONI_SSL_DIR:-./runtime/ssl}:/etc/postgresql/certs:ro,z
+      - ${PATRONI_DATA_DIR:-./runtime/data}/coord3:/home/postgres/data:Z
+
+  work1-1:
+    <<: *patroni-service
+    container_name: citus-work1-1
+    hostname: work1-1
+    volumes:
+      - ./config/patroni/00-base.yml:/etc/patroni/00-base.yml:ro,z
+      - ./config/patroni/nodes/work1-1.yml:/etc/patroni/10-node.yml:ro,z
+      - ${PATRONI_SSL_DIR:-./runtime/ssl}:/etc/postgresql/certs:ro,z
+      - ${PATRONI_DATA_DIR:-./runtime/data}/work1-1:/home/postgres/data:Z
+
+  work1-2:
+    <<: *patroni-service
+    container_name: citus-work1-2
+    hostname: work1-2
+    volumes:
+      - ./config/patroni/00-base.yml:/etc/patroni/00-base.yml:ro,z
+      - ./config/patroni/nodes/work1-2.yml:/etc/patroni/10-node.yml:ro,z
+      - ${PATRONI_SSL_DIR:-./runtime/ssl}:/etc/postgresql/certs:ro,z
+      - ${PATRONI_DATA_DIR:-./runtime/data}/work1-2:/home/postgres/data:Z
+
+  work2-1:
+    <<: *patroni-service
+    container_name: citus-work2-1
+    hostname: work2-1
+    volumes:
+      - ./config/patroni/00-base.yml:/etc/patroni/00-base.yml:ro,z
+      - ./config/patroni/nodes/work2-1.yml:/etc/patroni/10-node.yml:ro,z
+      - ${PATRONI_SSL_DIR:-./runtime/ssl}:/etc/postgresql/certs:ro,z
+      - ${PATRONI_DATA_DIR:-./runtime/data}/work2-1:/home/postgres/data:Z
+
+  work2-2:
+    <<: *patroni-service
+    container_name: citus-work2-2
+    hostname: work2-2
+    volumes:
+      - ./config/patroni/00-base.yml:/etc/patroni/00-base.yml:ro,z
+      - ./config/patroni/nodes/work2-2.yml:/etc/patroni/10-node.yml:ro,z
+      - ${PATRONI_SSL_DIR:-./runtime/ssl}:/etc/postgresql/certs:ro,z
+      - ${PATRONI_DATA_DIR:-./runtime/data}/work2-2:/home/postgres/data:Z

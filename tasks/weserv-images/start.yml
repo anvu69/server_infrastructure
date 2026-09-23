@@ -1,0 +1,25 @@
+---
+- name: Copy weserv-images folder
+  copy:
+    src: ./docker/weserv-images
+    dest: ~/docker
+    mode: 0755
+
+- name: Pull image
+  shell: |
+    docker pull ghcr.io/weserv/images:5.x
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/weserv-images
+    export VIRTUAL_PORT={{weserv_images_virtual_port}}
+    docker compose down
+
+- name: Start weserv-images
+  shell: |
+    cd ~/docker/weserv-images
+    export VIRTUAL_PORT={{weserv_images_virtual_port}}
+    export VIRTUAL_HOST={{weserv_images_virtual_host}}
+    export LETSENCRYPT_EMAIL={{weserv_images_letsencrypt_email}}
+    export NETWORK={{network}}
+    docker compose up -d

@@ -1,0 +1,33 @@
+# One-container restore utility for AWS S3 and S3-compatible storage -> PostgreSQL.
+#
+# The tool works with AWS S3 by leaving S3_ENDPOINT_URL empty. For S3-compatible
+# providers such as Contabo, MinIO, Wasabi, Backblaze B2, or Cloudflare R2, set
+# S3_ENDPOINT_URL to that provider's S3 API endpoint.
+
+services:
+  restore-tool:
+    image: ${RESTORE_TOOL_IMAGE:-***REMOVED***/pg-restore:dev}
+    container_name: postgres-restore-tool
+    profiles: [tools]
+    networks:
+      - postgres
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-east-1}
+      AWS_EC2_METADATA_DISABLED: "true"
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-}
+      S3_PREFIX: ${S3_PREFIX:-}
+      S3_URI: ${S3_URI:-}
+      RESTORE_DIR: /restore
+      RESTORE_FILE: ${RESTORE_FILE:-}
+      PGPASSWORD: ${PGPASSWORD:-}
+      PG_DSN: ${PG_DSN:-host=postgres port=5432 dbname=postgres user=postgres sslmode=prefer}
+      TARGET_DB: ${TARGET_DB:-}
+    volumes:
+      - ${RESTORE_DIR:-./restore}:/restore:Z
+
+networks:
+  postgres:
+    external: true
+    name: ${PG_NETWORK:-pg-network}

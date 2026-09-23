@@ -1,0 +1,6 @@
+pgdata/
+redisdata/
+rabbitmq_data/
+uploads/
+logs/
+caddy/

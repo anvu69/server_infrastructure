@@ -1,0 +1,31 @@
+---
+# Render PgBouncer config consumed by docker-compose.prod.yml.
+# The wildcard database mapping lets PgBouncer forward any existing PostgreSQL
+# database name to the current HAProxy coordinator primary.
+
+- name: Set PgBouncer config paths
+  ansible.builtin.set_fact:
+    patroni_compose_dir_effective: "{{ patroni_compose_dir | default('/docker/patroni') }}"
+    patroni_pgbouncer_config_dir_effective: "{{ patroni_pgbouncer_config_dir | default((patroni_compose_dir | default('/docker/patroni')) ~ '/runtime/pgbouncer') }}"
+
+- name: Ensure PgBouncer config directory exists
+  ansible.builtin.file:
+    path: "{{ patroni_pgbouncer_config_dir_effective }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Render PgBouncer config
+  ansible.builtin.template:
+    src: ./templates/patroni/pgbouncer.ini.j2
+    dest: "{{ patroni_pgbouncer_config_dir_effective }}/pgbouncer.ini"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Show PgBouncer config path
+  ansible.builtin.debug:
+    msg:
+      - "PgBouncer config rendered to {{ patroni_pgbouncer_config_dir_effective }}/pgbouncer.ini"
+      - "Set PATRONI_PGBOUNCER_CONFIG_DIR={{ patroni_pgbouncer_config_dir_effective }} before docker compose up"

@@ -1,0 +1,55 @@
+---
+- name: Copy redis-sentinel folder
+  copy:
+    src: ./docker/redis-sentinel
+    dest: /docker
+    mode: 0755
+
+# - name: Tạo thư mục cho dữ liệu Redis Master
+#   file:
+#     path: "~/docker/redis-sentinel/data/master"
+#     state: directory
+#     mode: '0755'
+
+# - name: Tạo thư mục cho dữ liệu Redis Replicas
+#   file:
+#     path: "~/docker/redis-sentinel/data/replica{{ item }}"
+#     state: directory
+#     mode: '0755'
+#   with_sequence: start=1 end={{ replica_scale_factor }}
+
+# - name: Tạo thư mục cho dữ liệu Sentinel
+#   file:
+#     path: "~/docker/redis-sentinel/data/sentinel{{ item }}"
+#     state: directory
+#     mode: '0755'
+#   with_sequence: start=1 end={{ sentinel_scale_factor }}
+
+# - name: Sao chép file sentinel.conf
+#   template:
+#     src: templates/redis-sentinel/sentinel.conf.j2
+#     dest: "~/docker/redis-sentinel/sentinel.conf"
+#     mode: '0644'
+
+- name: Sao chép file docker-compose.yml
+  template:
+    src: templates/redis-sentinel/docker-compose.yml.j2
+    dest: "/docker/redis-sentinel/docker-compose.yml"
+    mode: "0644"
+
+- name: Stop redis-sentinel
+  shell: |
+    cd /docker/redis-sentinel
+    export NETWORK={{network}}
+    export MASTER_PORT={{master_port}}
+    export SENTINEL_PORT={{sentinel_port}}
+    docker compose down
+
+- name: Start redis-sentinel
+  shell: |
+    cd /docker/redis-sentinel
+    export REDIS_PASSWORD={{redis_password}}
+    export MASTER_PORT={{master_port}}
+    export SENTINEL_PORT={{sentinel_port}}
+    export NETWORK={{network}}
+    docker compose up -d

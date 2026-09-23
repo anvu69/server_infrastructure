@@ -1,0 +1,56 @@
+services:
+  authelia:
+    image: authelia/authelia:latest
+    container_name: xpipe-authelia
+    restart: unless-stopped
+    volumes:
+      - ./authelia/config:/config
+      - ./authelia/secrets:/secrets:ro
+    environment:
+      - TZ=Asia/Ho_Chi_Minh
+      - AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE=/secrets/jwt_secret
+      - AUTHELIA_SESSION_SECRET_FILE=/secrets/session_secret
+      - AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE=/secrets/storage_encryption_key
+      - VIRTUAL_PORT=9091
+      - VIRTUAL_HOST=${AUTHELIA_VIRTUAL_HOST}
+      - LETSENCRYPT_HOST=${AUTHELIA_VIRTUAL_HOST}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    networks:
+      - default
+  xpipe-webtop:
+    image: ghcr.io/xpipe-io/xpipe-webtop:latest
+    container_name: xpipe-webtop
+    privileged: true
+    security_opt:
+      - seccomp=unconfined
+    expose:
+      - 3000
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    shm_size: "1gb"
+    depends_on:
+      - authelia
+    environment:
+      - PUID=0
+      - PGID=0
+      - CUSTOM_USER=${USER}
+      - PASSWORD=${PASSWORD}
+      - VIRTUAL_PORT=3000
+      - VIRTUAL_HOST=${VIRTUAL_HOST}
+      - LETSENCRYPT_HOST=${VIRTUAL_HOST}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    volumes:
+      - ./config:/config
+      - /var/run/docker.sock:/var/run/host-docker.sock
+      - xpipe_inner_docker_data:/var/lib/docker
+    networks:
+      - default
+
+networks:
+  default:
+    name: ${NETWORK:-nginx_proxy}
+    external: true
+
+volumes:
+  xpipe_inner_docker_data:

@@ -1,0 +1,25 @@
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    ports:
+      - 80
+    restart: unless-stopped
+    environment:
+      - DOMAIN=https://${VIRTUAL_HOST}
+      - DATABASE_URL=postgresql://${POSTGRESQL_USERNAME:-vaultwarden}:${POSTGRESQL_PASSWORD:-vaultwarden}@${POSTGRESQL_HOST:-postgres}:${PORTGRESQL_PORT:-6379}/${POSTGRES_DATABASE:-vaultwarden}
+      - VIRTUAL_HOST=${VIRTUAL_HOST}
+      - VIRTUAL_PORT=80
+      - LETSENCRYPT_HOST=${VIRTUAL_HOST}
+      - LETSENCRYPT_EMAIL=six4fiveix33@gmail.com
+      - ADMIN_TOKEN=${ADMIN_TOKEN}
+      - WEBSOCKET_ENABLED=true
+    volumes:
+      - ./vw-data:/data
+    networks:
+      - default
+
+networks:
+  default:
+    name: ${NETWORK:-nginx_proxy}
+    external: true

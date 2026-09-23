@@ -1,0 +1,55 @@
+services:
+  surrealdb:
+    image: surrealdb/surrealdb:v2
+    command: start --log info --user root --pass ${SURREAL_PASSWORD} rocksdb:/mydata/mydatabase.db
+    user: root
+    ports:
+      - 8000
+    volumes:
+      - ./surreal_data:/mydata
+    environment:
+      - SURREAL_EXPERIMENTAL_GRAPHQL=true
+    restart: always
+    pull_policy: always
+    networks:
+      - notebook-internal
+
+  open_notebook:
+    image: ghcr.io/lfnovo/open-notebook:v1-latest
+    ports:
+      - 8502
+      - 5055
+    environment:
+      - OPEN_NOTEBOOK_ENCRYPTION_KEY=${OPEN_NOTEBOOK_ENCRYPTION_KEY}
+      - OPEN_NOTEBOOK_PASSWORD=${OPEN_NOTEBOOK_PASSWORD}
+      - API_URL=https://${API_VIRTUAL_HOST}
+      - SURREAL_URL=ws://surrealdb:8000/rpc
+      - SURREAL_USER=root
+      - SURREAL_PASSWORD=${SURREAL_PASSWORD}
+      - SURREAL_NAMESPACE=open_notebook
+      - SURREAL_DATABASE=open_notebook
+      # - VIRTUAL_HOST=${VIRTUAL_HOST}
+      - |-
+        VIRTUAL_HOST_MULTIPORTS=${VIRTUAL_HOST}:
+          "/":
+            port: 8502
+
+        ${API_VIRTUAL_HOST}:
+          "/":
+            port: 5055
+      - LETSENCRYPT_HOST=${VIRTUAL_HOST},${API_VIRTUAL_HOST}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    volumes:
+      - ./notebook_data:/app/data
+    depends_on:
+      - surrealdb
+    restart: always
+    networks:
+      - notebook-internal
+      - default
+
+networks:
+  notebook-internal:
+  default:
+    name: ${NETWORK:-nginx_proxy}
+    external: true

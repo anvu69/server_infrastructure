@@ -1,0 +1,10 @@
+---
+- name: Deploy op service
+
+  hosts: all
+
+  become: true
+
+  tasks:
+    - import_tasks: tasks/op/start.yml
+    - import_tasks: tasks/common/prune.yml

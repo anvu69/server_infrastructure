@@ -2,17 +2,17 @@
 - name: Copy docker-db-backup folder
   copy:
     src: ./docker/docker-db-backup
-    dest: ~/docker
+    dest: /docker
     mode: 0755
 
 - name: Shut down service
   shell: |
-    cd ~/docker/docker-db-backup
+    cd /docker/docker-db-backup
     docker compose down
 
 - name: Start docker-db-backup
   shell: |
-    cd ~/docker/docker-db-backup
+    cd /docker/docker-db-backup
     export TZ={{tz}}
     export BACKUP_JOB_CONCURRENCY={{backup_job_concurrency}}
     export S3_BUCKET={{s3_bucket}}
@@ -21,6 +21,10 @@
     export S3_REGION={{s3_region}}
     export S3_HOST={{s3_host}}
     export S3_PATH={{s3_path}}
+    export BACKUP_INTERVAL={{backup_interval}}
+    export BACKUP_BEGIN={{backup_begin}}
+    export CLEANUP_TIME={{cleanup_time}}
+    export DB_TYPE={{db_type}}
     export DB_HOST={{db_host}}
     export DB_PORT={{db_port}}
     export DB_NAME={{db_name}}

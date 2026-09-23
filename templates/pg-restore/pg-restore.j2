@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "{{ restore_tool_base_dir }}"
+
+export PG_NETWORK="${PG_NETWORK:-{{ pg_network }}}"
+export RESTORE_TOOL_IMAGE="${RESTORE_TOOL_IMAGE:-{{ restore_tool_image }}}"
+export RESTORE_DIR="${RESTORE_DIR:-{{ restore_tool_restore_dir }}}"
+export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID:-{{ pg_restore_aws_access_key_id }}}"
+export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY:-{{ pg_restore_aws_secret_access_key }}}"
+export AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION:-{{ aws_default_region | default('us-east-1') }}}"
+export S3_ENDPOINT_URL="${S3_ENDPOINT_URL:-{{ s3_endpoint_url | default('') }}}"
+export S3_PREFIX="${S3_PREFIX:-{{ s3_prefix | default(s3_uri | default('')) }}}"
+export S3_URI="${S3_URI:-$S3_PREFIX}"
+export PGPASSWORD="${PGPASSWORD:-{{ pg_restore_pg_password | default('') }}}"
+export PG_DSN="${PG_DSN:-{{ pg_dsn | default('host=postgres port=5432 dbname=postgres user=postgres sslmode=prefer') }}}"
+export PG_ADMIN_DSN="${PG_ADMIN_DSN:-{{ pg_admin_dsn | default('host=postgres port=5432 dbname=postgres user=postgres sslmode=prefer') }}}"
+export TARGET_DB="${TARGET_DB:-{{ target_db | default('') }}}"
+
+if [ "${1:-}" = "createdb" ]; then
+  export PG_DSN="$PG_ADMIN_DSN"
+fi
+
+exec docker compose -f docker-compose.yml run --rm restore-tool "$@"

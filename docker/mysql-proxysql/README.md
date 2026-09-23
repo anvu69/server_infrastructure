@@ -21,5 +21,5 @@ save mysql variables to disk;
 ```
 
 ```
-mysql -uroot -p***REMOVED***
+mysql -uroot -p<DB_PASSWORD>
 ```

@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  webapp:
+    image: node:16-alpine
+    container_name: example-webapp
+    restart: always
+    working_dir: /app
+    volumes:
+      - ./app:/app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      # Sử dụng địa chỉ IP tĩnh của các sentinel thay vì hostname
+      - SENTINEL_IPS=${SENTINEL_IP_PREFIX:-172.28.0}.21,${SENTINEL_IP_PREFIX:-172.28.0}.22,${SENTINEL_IP_PREFIX:-172.28.0}.23
+      - SENTINEL_MASTER_NAME=mymaster
+    networks:
+      - redis_proxy_network
+    command: ["npm", "start"]
+
+networks:
+  redis_proxy_network:
+    name: ${REDIS_NETWORK_NAME:-redis_proxy_network}
+    external: true 

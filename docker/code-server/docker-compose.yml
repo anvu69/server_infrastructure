@@ -1,0 +1,22 @@
+services:
+  code-server:
+    # image: codercom/code-server:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: code-server
+    restart: unless-stopped
+    user: root
+    ports:
+      - "45689:8080"
+    volumes:
+      - ./data/project:/home/coder/project
+      - ./data/config:/home/coder/.config
+      - ./data/local:/home/coder/.local
+      - ./data/certs:/home/coder/.config/certs
+      - ./data/projects:/root/projects
+      - ./data/labs:/root/labs
+      - ./data/ssh:/root/.ssh
+    command: --bind-addr 0.0.0.0:8080 --cert /home/coder/.config/certs/self-signed.crt --cert-key /home/coder/.config/certs/self-signed.key .
+    environment:
+      - PASSWORD=${PASSWORD}

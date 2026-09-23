@@ -1,0 +1,10 @@
+---
+- name: Install code-server
+
+  hosts: all
+
+  become: true
+
+  tasks:
+    - import_tasks: tasks/code-server/start.yml
+    - import_tasks: tasks/common/prune.yml

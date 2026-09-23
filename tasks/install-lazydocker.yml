@@ -13,7 +13,7 @@
 - name: Start lazydocker
   shell: |
     cd ~/docker/lazydocker &&
-    docker compose up -d
+    docker compose up -d --build
 
 # - name: Set alias lazydocker
 #   shell: |

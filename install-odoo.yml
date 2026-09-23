@@ -1,0 +1,8 @@
+---
+- name: Deploy odoo service
+
+  hosts: all
+
+  tasks:
+    - import_tasks: tasks/odoo/start.yml
+    - import_tasks: tasks/common/prune.yml

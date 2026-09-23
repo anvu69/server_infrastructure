@@ -1,0 +1,10 @@
+---
+- name: Install rustdesk
+
+  hosts: all
+
+  become: true
+
+  tasks:
+    - import_tasks: tasks/rustdesk/main.yml
+    - import_tasks: tasks/common/prune.yml

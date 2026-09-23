@@ -1,0 +1,30 @@
+---
+- name: Copy op folder
+  copy:
+    src: ./docker/op
+    dest: ~/docker
+    mode: 0755
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/op
+    docker compose down
+
+- name: Start services
+  shell: |
+    cd ~/docker/op
+    export POSTGRES_PASSWORD={{op_postgres_password}}
+    export API_VIRTUAL_HOST={{op_api_virtual_host}}
+    export API_VIRTUAL_PORT={{api_virtual_port}}
+    export DASHBOARD_VIRTUAL_HOST={{dashboard_virtual_host}}
+    export DASHBOARD_VIRTUAL_PORT={{dashboard_virtual_port}}
+    export COOKIE_SECRET={{cookie_secret}}
+    export JWT_SECRET={{jwt_secret}}
+    export NEXTAUTH_SECRET={{nextauth_secret}}
+    export ALLOW_REGISTRATION={{allow_registration}}
+    export ALLOW_INVITATION={{allow_invitation}}
+    export SELF_HOSTED={{self_hosted}}
+    export OP_WORKER_REPLICAS={{op_worker_replicas}}
+    export NETWORK={{network}}
+    export LETSENCRYPT_EMAIL={{common_letsencrypt_email}}
+    docker compose up -d

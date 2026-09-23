@@ -1,0 +1,50 @@
+---
+- name: Ensure restore tool directories exist
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ restore_tool_base_dir }}", mode: "0755" }
+    - { path: "{{ restore_tool_restore_dir }}", mode: "0700" }
+
+- name: Render restore tool compose file
+  ansible.builtin.template:
+    src: ./templates/pg-restore/docker-compose.yml.j2
+    dest: "{{ restore_tool_base_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Render pg-restore host command
+  ansible.builtin.template:
+    src: ./templates/pg-restore/pg-restore.j2
+    dest: "{{ restore_tool_command_path | default('/usr/local/bin/pg-restore') }}"
+    owner: root
+    group: root
+    mode: "0750"
+  no_log: true
+
+- name: Pull restore tool image
+  ansible.builtin.shell: |
+    set -euo pipefail
+    cd "{{ restore_tool_base_dir }}"
+
+    export PG_NETWORK="{{ pg_network }}"
+    export RESTORE_TOOL_IMAGE="{{ restore_tool_image }}"
+
+    docker compose -f docker-compose.yml pull restore-tool
+  args:
+    executable: /bin/bash
+  when: restore_tool_pull | default(true) | bool
+
+- name: Show restore tool usage
+  ansible.builtin.debug:
+    msg:
+      - "Restore tool installed at {{ restore_tool_base_dir }}"
+      - "Command: {{ restore_tool_command_path | default('/usr/local/bin/pg-restore') }}"
+      - "List files: pg-restore list"
+      - "Select and download: pg-restore select-download"
+      - "Restore SQL gzip: PGPASSWORD='***' PG_DSN='host=... dbname=...' pg-restore restore-sql"

@@ -137,7 +137,7 @@ services:
         max-size: '50m'
         max-file: '5'
     environment:
-      - REACT_APP_API_URL=https://nv-api.kqxs99.net
+      - REACT_APP_API_URL=${REACT_APP_API_URL}
       - REACT_APP_ENVIRONMENT=${NODE_ENV}
       - REACT_APP_WIDGET_EMBED_PATH=${WIDGET_EMBED_PATH}
       - REACT_APP_DOCKER_HOSTED_ENV=true

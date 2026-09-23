@@ -1,0 +1,88 @@
+---
+- name: Copy plane folder
+  copy:
+    src: ./docker/plane
+    dest: ~/docker
+    mode: 0755
+
+- name: Ensure plane data directories exist
+  file:
+    path: "~/docker/plane/{{item}}"
+    state: directory
+    mode: 0755
+  loop:
+    - pgdata
+    - redisdata
+    - rabbitmq_data
+    - uploads
+    - logs/api
+    - logs/worker
+    - logs/beat-worker
+    - logs/migrator
+    - caddy/config
+    - caddy/data
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/plane
+    docker compose down
+
+- name: Start plane
+  shell: |
+    cd ~/docker/plane
+    export APP_RELEASE="{{app_release}}"
+    export VIRTUAL_HOST="{{plane_virtual_host}}"
+    export WEB_URL="{{web_url | default('https://' + plane_virtual_host)}}"
+    export CORS_ALLOWED_ORIGINS="{{cors_allowed_origins | default('https://' + plane_virtual_host)}}"
+    export SECRET_KEY="{{secret_key}}"
+    export LIVE_SERVER_SECRET_KEY="{{live_server_secret_key}}"
+    export DEBUG="{{debug}}"
+    export FILE_SIZE_LIMIT="{{file_size_limit}}"
+    export GUNICORN_WORKERS="{{gunicorn_workers}}"
+    export API_KEY_RATE_LIMIT="{{api_key_rate_limit}}"
+    export AUTHENTICATION_RATE_LIMIT="{{authentication_rate_limit}}"
+    export WEB_REPLICAS="{{web_replicas}}"
+    export SPACE_REPLICAS="{{space_replicas}}"
+    export ADMIN_REPLICAS="{{admin_replicas}}"
+    export API_REPLICAS="{{api_replicas}}"
+    export WORKER_REPLICAS="{{worker_replicas}}"
+    export BEAT_WORKER_REPLICAS="{{beat_worker_replicas}}"
+    export LIVE_REPLICAS="{{live_replicas}}"
+    export PGHOST="{{plane_pg_host}}"
+    export PGDATABASE="{{plane_pg_database}}"
+    export POSTGRES_DB="{{plane_pg_database}}"
+    export POSTGRES_USER="{{plane_pg_user}}"
+    export POSTGRES_PASSWORD="{{plane_pg_password}}"
+    export POSTGRES_PORT="{{plane_pg_port}}"
+    export DATABASE_URL="{{database_url | default('postgresql://' + plane_pg_user + ':' + plane_pg_password + '@' + plane_pg_host + ':' + plane_pg_port|string + '/' + plane_pg_database)}}"
+    export REDIS_HOST="{{redis_host}}"
+    export REDIS_PORT="{{redis_port}}"
+    export REDIS_URL="{{redis_url | default('redis://' + redis_host + ':' + redis_port|string + '/')}}"
+    export RABBITMQ_HOST="{{rabbitmq_host}}"
+    export RABBITMQ_PORT="{{rabbitmq_port}}"
+    export RABBITMQ_USER="{{rabbitmq_user}}"
+    export RABBITMQ_PASSWORD="{{rabbitmq_password}}"
+    export RABBITMQ_VHOST="{{rabbitmq_vhost}}"
+    export AMQP_URL="{{amqp_url | default('amqp://' + rabbitmq_user + ':' + rabbitmq_password + '@' + rabbitmq_host + ':' + rabbitmq_port|string + '/' + rabbitmq_vhost)}}"
+    export USE_MINIO="{{use_minio}}"
+    export AWS_REGION="{{aws_region}}"
+    export AWS_ACCESS_KEY_ID="{{plane_aws_access_key_id}}"
+    export AWS_SECRET_ACCESS_KEY="{{plane_aws_secret_access_key}}"
+    export AWS_S3_ENDPOINT_URL="{{aws_s3_endpoint_url}}"
+    export AWS_S3_BUCKET_NAME="{{aws_s3_bucket_name}}"
+    export MINIO_ENDPOINT_SSL="{{minio_endpoint_ssl}}"
+    export WEBHOOK_ALLOWED_IPS="{{webhook_allowed_ips}}"
+    export WEBHOOK_ALLOWED_HOSTS="{{webhook_allowed_hosts}}"
+    export TRUSTED_PROXIES="{{trusted_proxies}}"
+    export NETWORK="{{network}}"
+    export LETSENCRYPT_EMAIL="{{plane_letsencrypt_email}}"
+    export LOG_MAX_SIZE="{{log_max_size}}"
+    export LOG_MAX_FILE="{{log_max_file}}"
+    docker compose up --pull=always -d
+
+- name: Show plane endpoints
+  debug:
+    msg:
+      - "Plane: https://{{plane_virtual_host}}"
+      - "Admin (god mode): https://{{plane_virtual_host}}/god-mode/"
+      - "First run takes a few minutes while the migrator seeds the database."

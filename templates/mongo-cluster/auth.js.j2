@@ -2,6 +2,6 @@
 
 mongosh <<EOF
 use admin;
-db.createUser({user: "{{root_user}}", pwd: "{{root_password}}", roles:[{role: "root", db: "admin"}]});
+db.createUser({user: "{{mongo_cluster_root_user}}", pwd: "{{mongo_cluster_root_password}}", roles:[{role: "root", db: "admin"}]});
 exit;
 EOF

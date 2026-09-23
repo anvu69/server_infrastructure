@@ -1,0 +1,10 @@
+---
+- name: Triển khai Redis Sentinel
+
+  hosts: all
+
+  become: yes
+
+  tasks:
+    - import_tasks: tasks/redis-sentinel/main.yml
+    - import_tasks: tasks/common/prune.yml

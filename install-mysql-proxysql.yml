@@ -3,11 +3,6 @@
 
   hosts: all
 
-  vars_files:
-    - vars/common.yml
-    - vars/timezone.yml
-    - vars/mysql-proxysql.yml
-
   tasks:
     - import_tasks: tasks/mysql-proxysql/main.yml
     - import_tasks: tasks/common/prune.yml

@@ -3,11 +3,6 @@
 
   hosts: all
 
-  vars_files:
-    - vars/common.yml
-    - vars/timezone.yml
-    - vars/mysql5_7.yml
-
   tasks:
     - import_tasks: tasks/mysql5_7/start.yml
     - import_tasks: tasks/common/prune.yml

@@ -1,0 +1,8 @@
+---
+- name: Restore PostgreSQL backup from S3
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Run PostgreSQL restore tool
+      ansible.builtin.import_tasks: tasks/pg-restore/start.yml

@@ -1,0 +1,18 @@
+[databases]
+* = host={{ pgbouncer_server_host | default('haproxy') }} port={{ pgbouncer_server_port | default(5000) }}
+
+[pgbouncer]
+listen_addr = 0.0.0.0
+listen_port = 5432
+unix_socket_dir =
+auth_type = {{ pgbouncer_auth_type | default('scram-sha-256') }}
+auth_file = /etc/pgbouncer/userlist.txt
+pool_mode = {{ pgbouncer_pool_mode | default('session') }}
+max_client_conn = {{ pgbouncer_max_client_conn | default(1000) }}
+default_pool_size = {{ pgbouncer_default_pool_size | default(80) }}
+reserve_pool_size = {{ pgbouncer_reserve_pool_size | default(20) }}
+ignore_startup_parameters = {{ pgbouncer_ignore_startup_parameters | default('extra_float_digits,options') }}
+server_tls_sslmode = {{ pgbouncer_server_tls_sslmode | default('verify-ca') }}
+server_tls_ca_file = /etc/postgresql/certs/ca.crt
+admin_users = {{ pgbouncer_admin_users | default(pgbouncer_db_user | default('postgres')) }}
+stats_users = {{ pgbouncer_stats_users | default(pgbouncer_db_user | default('postgres')) }}

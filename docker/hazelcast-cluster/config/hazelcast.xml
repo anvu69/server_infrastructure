@@ -28,7 +28,7 @@
 
     <group>
         <name>game</name>
-        <password>***REMOVED***</password>
+        <password><MC_ADMIN_PASSWORD></password>
     </group>
     <properties>
         <property name="hazelcast.tcp.join.port.try.count">3</property>

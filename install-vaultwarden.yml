@@ -1,0 +1,8 @@
+---
+- name: Deploy Vaultwarden service
+
+  hosts: all
+
+  tasks:
+    - import_tasks: tasks/vaultwarden/start.yml
+    - import_tasks: tasks/common/prune.yml

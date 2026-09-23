@@ -1,0 +1,13 @@
+scope: demo
+namespace: /service
+name: coord3
+
+restapi:
+  connect_address: coord3:8008
+
+citus:
+  group: 0
+  database: citus
+
+postgresql:
+  connect_address: coord3:5432

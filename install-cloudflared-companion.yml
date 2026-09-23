@@ -1,0 +1,8 @@
+---
+- name: Deploy Cloudflared Companion service
+
+  hosts: all
+
+  tasks:
+    - import_tasks: tasks/cloudflared-companion/start.yml
+    - import_tasks: tasks/common/prune.yml

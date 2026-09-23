@@ -1,0 +1,25 @@
+services:
+  9router:
+    image: decolua/9router:latest
+    container_name: 9router
+    ports:
+      - 20128
+    environment:
+      - DATA_DIR=/app/data
+      - INITIAL_PASSWORD=${INITIAL_PASSWORD}
+      - ENABLE_REQUEST_LOGS=true
+      - REQUIRE_API_KEY=true
+      - AUTH_COOKIE_SECURE=true
+      - API_KEY_SECRET=${API_KEY_SECRET}
+      - VIRTUAL_HOST=${VIRTUAL_HOST}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    volumes:
+      - ./9router:/app/data
+    restart: always
+    networks:
+      - default
+
+networks:
+  default:
+    name: ${NETWORK:-nginx_proxy}
+    external: true

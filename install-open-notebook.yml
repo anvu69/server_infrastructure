@@ -1,0 +1,10 @@
+---
+- name: Deploy open-notebook service
+
+  hosts: all
+
+  become: true
+
+  tasks:
+    - import_tasks: tasks/open-notebook/start.yml
+    - import_tasks: tasks/common/prune.yml

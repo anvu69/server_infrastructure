@@ -1,0 +1,42 @@
+services:
+  odoo:
+    image: odoo:18.0
+    container_name: odoo
+    ports:
+      - ${VIRTUAL_PORT:-8069}
+      # - 8072
+    tty: true
+    command: --
+    user: root
+    volumes:
+      - odoo-data:/var/lib/odoo
+      # - ./entrypoint.sh:/entrypoint.sh
+      - ./addons:/mnt/extra-addons
+      - ./etc:/etc/odoo
+    environment:
+      - HOST=${POSTGRES_HOST}
+      - USER=${POSTGRES_USER}
+      - PASSWORD=${POSTGRES_PASSWORD}
+      - LANGUAGE=${LANGUAGE}
+      - VIRTUAL_HOST=${VIRTUAL_HOST}
+      - VIRTUAL_PORT=${VIRTUAL_PORT}
+      - LETSENCRYPT_HOST=${VIRTUAL_HOST}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    # command: odoo -i base
+    restart: unless-stopped
+    logging:
+      driver: local
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILE:-10}
+    networks:
+      - default
+
+networks:
+  default:
+    external: true
+    name: ${NETWORK:-nginx_proxy}
+
+volumes:
+  odoo-data:
+    driver: local

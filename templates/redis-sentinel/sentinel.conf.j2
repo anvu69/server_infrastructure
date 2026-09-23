@@ -1,0 +1,29 @@
+bind 0.0.0.0
+port 26379
+
+dir "/tmp"
+
+daemonize no
+protected-mode yes
+
+# Đảm bảo có đủ thời gian để phân giải DNS khi khởi động
+sentinel resolve-hostnames yes
+sentinel announce-hostnames yes
+
+# Sử dụng địa chỉ IP tĩnh của Redis master trong mạng proxy
+sentinel monitor mymaster {{ redis_master_ip }} 6379 {% if sentinel_scale_factor | int > 1 %}{{ (sentinel_scale_factor | int / 2) | round(0, 'ceil') | int }}{% else %}1{% endif %}
+
+sentinel auth-pass mymaster {{ redis_password }}
+
+sentinel down-after-milliseconds mymaster {{ sentinel_down_after }}
+
+sentinel parallel-syncs mymaster {{ sentinel_parallel_syncs }}
+
+sentinel failover-timeout mymaster {{ sentinel_failover_timeout }}
+
+# Tự động cập nhật cấu hình sentinel runtime
+sentinel deny-scripts-reconfig no
+
+# Sử dụng biến môi trường để thiết lập IP quảng bá của sentinel
+# Biến môi trường sẽ được truyền từ Docker Compose
+

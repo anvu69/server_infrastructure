@@ -1,0 +1,158 @@
+# Optimized HAProxy Configuration for Citus Cluster
+# High connection load balancing, SSL disabled
+
+global
+    # Process and connection limits optimized for high load
+    maxconn 10000
+    nbthread 4
+    
+    # Performance tuning
+    tune.bufsize 32768
+    tune.maxrewrite 8192
+    
+    # Logging
+    log stdout local0 info
+    
+    # Stats socket
+    stats socket /run/haproxy/admin.sock mode 660 level admin
+    stats timeout 30s
+
+defaults
+    mode tcp
+    option tcplog
+    option dontlognull
+    option redispatch
+    
+    # Timeouts optimized for database connections
+    timeout connect 5s
+    timeout client 30m
+    timeout server 30m
+    timeout check 5s
+    
+    # Connection limits and retries
+    retries 3
+    option tcp-check
+    
+    # Load balancing
+    balance roundrobin
+
+# Statistics interface
+listen stats
+    mode http
+    bind *:7000
+    stats enable
+    stats uri /
+    stats refresh 30s
+    stats show-node
+    stats show-legends
+    stats admin if TRUE
+    stats auth {{ vault_patroni_citus_haproxy_stats_user }}:{{ vault_patroni_citus_haproxy_stats_password }}
+
+# Coordinator cluster load balancer
+listen coordinator-primary
+    bind *:5000
+    option httpchk HEAD /primary
+    http-check expect status 200
+    balance roundrobin
+
+    # Connection limits per server (SSL disabled)
+    default-server maxconn 2000 check port 8008
+
+    # Coordinator nodes - match docker-compose IPs
+    server coord1 coord1:5432 maxconn 2000 check port 8008
+    server coord2 coord2:5432 maxconn 2000 check port 8008 backup
+    server coord3 coord3:5432 maxconn 2000 check port 8008 backup
+
+# Coordinator read-only replicas
+listen coordinator-replicas
+    bind *:5002
+    option httpchk HEAD /replica
+    http-check expect status 200
+    balance roundrobin
+    
+    # Connection limits per server
+    default-server maxconn 1500 check port 8008
+    
+    # All coordinator nodes for read distribution
+    server coord1 coord1:5432 maxconn 1500 check port 8008
+    server coord2 coord2:5432 maxconn 1500 check port 8008
+    server coord3 coord3:5432 maxconn 1500 check port 8008
+
+# Workers primary load balancer
+listen workers-primary
+    bind *:5001
+    option httpchk HEAD /primary
+    http-check expect status 200
+    balance roundrobin
+    
+    # Connection limits per server
+    default-server maxconn 1500 check port 8008
+    
+    # Worker group 1
+    server work1-1 work1-1:5432 maxconn 1500 check port 8008
+    server work1-2 work1-2:5432 maxconn 1500 check port 8008 backup
+    
+    # Worker group 2
+    server work2-1 work2-1:5432 maxconn 1500 check port 8008
+    server work2-2 work2-2:5432 maxconn 1500 check port 8008 backup
+
+# Workers read-only replicas
+listen workers-replicas
+    bind *:5003
+    option httpchk HEAD /replica
+    http-check expect status 200
+    balance roundrobin
+    
+    # Connection limits per server
+    default-server maxconn 1000 check port 8008
+    
+    # All worker nodes for read distribution
+    server work1-1 work1-1:5432 maxconn 1000 check port 8008
+    server work1-2 work1-2:5432 maxconn 1000 check port 8008
+    server work2-1 work2-1:5432 maxconn 1000 check port 8008
+    server work2-2 work2-2:5432 maxconn 1000 check port 8008
+
+# Individual worker group access (for specific shard operations)
+listen worker-group-1
+    bind *:5011
+    option httpchk HEAD /primary
+    http-check expect status 200
+    balance roundrobin
+    
+    default-server maxconn 1500 check port 8008
+    
+    server work1-1 work1-1:5432 maxconn 1500 check port 8008
+    server work1-2 work1-2:5432 maxconn 1500 check port 8008 backup
+
+listen worker-group-2
+    bind *:5012
+    option httpchk HEAD /primary
+    http-check expect status 200
+    balance roundrobin
+    
+    default-server maxconn 1500 check port 8008
+    
+    server work2-1 work2-1:5432 maxconn 1500 check port 8008
+    server work2-2 work2-2:5432 maxconn 1500 check port 8008 backup
+
+# Patroni REST API load balancer (for management)
+listen patroni-api
+    # Bound to loopback only. Patroni's REST API exposes write endpoints
+    # (POST /switchover, /restart, /reinit) and this proxy does NOT
+    # authenticate them: `stats auth` only guards HAProxy's own stats page,
+    # which this block does not serve. Reach it from the host, e.g. over an
+    # SSH tunnel; do not widen this bind without putting real auth in front.
+    bind *:8080
+    mode http
+    option httpchk GET /
+    http-check expect status 200
+    balance roundrobin
+    
+    # All nodes API endpoints
+    server coord1-api coord1:8008 maxconn 100 check
+    server coord2-api coord2:8008 maxconn 100 check
+    server coord3-api coord3:8008 maxconn 100 check
+    server work1-1-api work1-1:8008 maxconn 100 check
+    server work1-2-api work1-2:8008 maxconn 100 check
+    server work2-1-api work2-1:8008 maxconn 100 check
+    server work2-2-api work2-2:8008 maxconn 100 check

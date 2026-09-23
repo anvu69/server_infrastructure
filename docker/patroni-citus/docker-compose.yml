@@ -14,6 +14,107 @@ x-env-share: &env-share
   PATRONI_REPLICATION_PASSWORD: ${PATRONI_REPLICATION_PASSWORD:-replicate}
   PATRONI_admin_PASSWORD: ${PATRONI_admin_PASSWORD:-admin}
   PATRONI_admin_OPTIONS: createdb,createrole
+  # Connection Settings - Optimized for High Connections
+  PATRONI_POSTGRESQL_MAX_CONNECTIONS: 2000
+  PATRONI_POSTGRESQL_SUPERUSER_RESERVED_CONNECTIONS: 10
+  PATRONI_POSTGRESQL_MAX_WAL_SENDERS: 20
+  PATRONI_POSTGRESQL_MAX_REPLICATION_SLOTS: 20
+  # Memory Settings - 25% of 128GB = 32GB total
+  # Coordinator gets ~10GB, Workers get ~8GB each
+  PATRONI_POSTGRESQL_SHARED_BUFFERS: 8GB
+  PATRONI_POSTGRESQL_EFFECTIVE_CACHE_SIZE: 24GB
+  PATRONI_POSTGRESQL_WORK_MEM: 32MB
+  PATRONI_POSTGRESQL_MAINTENANCE_WORK_MEM: 1GB
+  PATRONI_POSTGRESQL_WAL_BUFFERS: 64MB
+  # Connection Pooling & Performance
+  PATRONI_POSTGRESQL_MAX_WORKER_PROCESSES: 24
+  PATRONI_POSTGRESQL_MAX_PARALLEL_WORKERS: 12
+  PATRONI_POSTGRESQL_MAX_PARALLEL_WORKERS_PER_GATHER: 6
+  PATRONI_POSTGRESQL_MAX_PARALLEL_MAINTENANCE_WORKERS: 6
+  # WAL & Checkpoint Settings
+  PATRONI_POSTGRESQL_WAL_LEVEL: logical
+  PATRONI_POSTGRESQL_MAX_WAL_SIZE: 4GB
+  PATRONI_POSTGRESQL_MIN_WAL_SIZE: 1GB
+  PATRONI_POSTGRESQL_CHECKPOINT_COMPLETION_TARGET: 0.9
+  PATRONI_POSTGRESQL_CHECKPOINT_TIMEOUT: 15min
+  # Logging - Optimized for Production
+  PATRONI_POSTGRESQL_LOG_DESTINATION: stderr
+  PATRONI_POSTGRESQL_LOG_COLLECTOR: off
+  PATRONI_POSTGRESQL_LOG_STATEMENT: none
+  PATRONI_POSTGRESQL_LOG_MIN_DURATION_STATEMENT: 1000
+  PATRONI_POSTGRESQL_LOG_CHECKPOINTS: on
+  PATRONI_POSTGRESQL_LOG_CONNECTIONS: off
+  PATRONI_POSTGRESQL_LOG_DISCONNECTIONS: off
+  PATRONI_POSTGRESQL_LOG_LOCK_WAITS: on
+  # Vacuum & Autovacuum Settings
+  PATRONI_POSTGRESQL_AUTOVACUUM: on
+  PATRONI_POSTGRESQL_AUTOVACUUM_MAX_WORKERS: 6
+  PATRONI_POSTGRESQL_AUTOVACUUM_NAPTIME: 30s
+  PATRONI_POSTGRESQL_AUTOVACUUM_VACUUM_THRESHOLD: 100
+  PATRONI_POSTGRESQL_AUTOVACUUM_ANALYZE_THRESHOLD: 100
+  PATRONI_POSTGRESQL_AUTOVACUUM_VACUUM_SCALE_FACTOR: 0.1
+  PATRONI_POSTGRESQL_AUTOVACUUM_ANALYZE_SCALE_FACTOR: 0.05
+  # Statistics & Query Planning
+  PATRONI_POSTGRESQL_TRACK_ACTIVITIES: on
+  PATRONI_POSTGRESQL_TRACK_COUNTS: on
+  PATRONI_POSTGRESQL_TRACK_IO_TIMING: on
+  PATRONI_POSTGRESQL_TRACK_FUNCTIONS: none
+  PATRONI_POSTGRESQL_DEFAULT_STATISTICS_TARGET: 100
+  # Network & Timeout Settings
+  PATRONI_POSTGRESQL_TCP_KEEPALIVES_IDLE: 600
+  PATRONI_POSTGRESQL_TCP_KEEPALIVES_INTERVAL: 30
+  PATRONI_POSTGRESQL_TCP_KEEPALIVES_COUNT: 3
+  PATRONI_POSTGRESQL_STATEMENT_TIMEOUT: 0
+  PATRONI_POSTGRESQL_LOCK_TIMEOUT: 30s
+  PATRONI_POSTGRESQL_IDLE_IN_TRANSACTION_SESSION_TIMEOUT: 60min
+  # Citus Specific Settings
+  PATRONI_POSTGRESQL_CITUS_MAX_INTERMEDIATE_RESULT_SIZE: 1GB
+  PATRONI_POSTGRESQL_CITUS_MAX_CACHED_CONNS_PER_WORKER: 10
+  PATRONI_POSTGRESQL_CITUS_NODE_CONNINFO_TIMEOUT: 30000
+  PATRONI_POSTGRESQL_CITUS_REMOTE_TASK_CHECK_INTERVAL: 1000
+  # Background Writer & Checkpointer
+  PATRONI_POSTGRESQL_BGWRITER_DELAY: 200ms
+  PATRONI_POSTGRESQL_BGWRITER_LRU_MAXPAGES: 100
+  PATRONI_POSTGRESQL_BGWRITER_LRU_MULTIPLIER: 2.0
+  PATRONI_POSTGRESQL_BGWRITER_FLUSH_AFTER: 512kB
+  # Random Page Cost (SSD optimized)
+  PATRONI_POSTGRESQL_RANDOM_PAGE_COST: 1.1
+  PATRONI_POSTGRESQL_SEQ_PAGE_COST: 1.0
+  PATRONI_POSTGRESQL_EFFECTIVE_IO_CONCURRENCY: 200
+  # JIT Settings (disabled for stability)
+  PATRONI_POSTGRESQL_JIT: off
+  # Shared Preload Libraries
+  PATRONI_POSTGRESQL_SHARED_PRELOAD_LIBRARIES: citus,pg_stat_statements
+  # Additional Performance Settings
+  PATRONI_POSTGRESQL_SYNCHRONOUS_COMMIT: off
+  PATRONI_POSTGRESQL_COMMIT_DELAY: 0
+  PATRONI_POSTGRESQL_COMMIT_SIBLINGS: 5
+  PATRONI_POSTGRESQL_FULL_PAGE_WRITES: on
+  PATRONI_POSTGRESQL_WAL_COMPRESSION: on
+  # Prepared Transactions (Citus requirement)
+  PATRONI_POSTGRESQL_MAX_PREPARED_TRANSACTIONS: 4000
+  # Hot Standby Settings
+  PATRONI_POSTGRESQL_HOT_STANDBY: on
+  PATRONI_POSTGRESQL_HOT_STANDBY_FEEDBACK: on
+  PATRONI_POSTGRESQL_MAX_STANDBY_ARCHIVE_DELAY: 30s
+  PATRONI_POSTGRESQL_MAX_STANDBY_STREAMING_DELAY: 30s
+  # Archive Settings (disabled for performance)
+  PATRONI_POSTGRESQL_ARCHIVE_MODE: off
+  # Locale Settings
+  PATRONI_POSTGRESQL_LC_MESSAGES: en_US.UTF-8
+  PATRONI_POSTGRESQL_LC_MONETARY: en_US.UTF-8
+  PATRONI_POSTGRESQL_LC_NUMERIC: en_US.UTF-8
+  PATRONI_POSTGRESQL_LC_TIME: en_US.UTF-8
+  # Timezone
+  PATRONI_POSTGRESQL_TIMEZONE: UTC+7
+  PATRONI_POSTGRESQL_LOG_TIMEZONE: UTC+7
+  # Patroni Specific Settings
+  PATRONI_TTL: 30
+  PATRONI_LOOP_WAIT: 10
+  PATRONI_RETRY_TIMEOUT: 10
+  PATRONI_MAXIMUM_LAG_ON_FAILOVER: 1048576
+  PATRONI_SYNCHRONOUS_MODE: quorum
+  PATRONI_SYNCHRONOUS_MODE_STRICT: on
 
 x-env-etcd: &env-etdc-share
   ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
@@ -25,7 +126,7 @@ x-env-etcd: &env-etdc-share
 
 services:
   etcd1: &etcd
-    image: ***REMOVED***/patroni-citus:3.2.2-no-ssl
+    image: ***REMOVED***/patroni-citus:3.2.2-no-ssl2
     environment:
       <<: *env-etdc-share
       # PATRONI_POSTGRESQL_DATA_DIR: data/etdc1
@@ -35,6 +136,14 @@ services:
       options:
         max-size: ${LOG_MAX_SIZE:-10m}
         max-file: ${LOG_MAX_FILE:-10}
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
     # volumes:
     #   - ./etcd1_data:/home/postgres/etcd1.etcd
 
@@ -59,16 +168,26 @@ services:
     #   - ./etcd3_data:/home/postgres/etcd3.etcd
 
   haproxy:
-    image: ***REMOVED***/patroni-citus:3.2.2-no-ssl
+    image: ***REMOVED***/patroni-citus:3.2.2-no-ssl2
     container_name: patroni-citus-haproxy
-    depends_on:
-      - etcd1
-      - etcd2
-      - etcd3
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
     ports:
-      - '${PORT:-5000}:5000' # Access to the coorinator primary
-      - '5001:5001' # Load-balancing across workers primaries
-      - '7001:7000' # stats
+      - '${PORT:-5000}:5000' # Coordinator primary access
+      - '5001:5001' # Workers load balancing
+      - '5002:5002' # Coordinator replicas (read-only)
+      - '5003:5003' # Workers replicas (read-only)
+      - '5011:5011' # Worker group 1 direct access
+      - '5012:5012' # Worker group 2 direct access
+      - '7000:7000' # HAProxy stats
+      # Loopback-only: the API behind this port exposes write endpoints
+      # (switchover, restart, reinit) and HAProxy does not authenticate it.
+      - '127.0.0.1:8080:8080' # Patroni REST API
+    command: haproxy
+    volumes:
+      - ./configs/haproxy.cfg:/etc/haproxy/haproxy.cfg:rw
     environment: &haproxy_env
       <<: *env-share
       ETCDCTL_ENDPOINTS: http://etcd1:2379,http://etcd2:2379,http://etcd3:2379
@@ -76,28 +195,57 @@ services:
       PATRONI_SCOPE: ${PATRONI_SCOPE:-demo}
       PATRONI_CITUS_GROUP: 0
       PATRONI_CITUS_DATABASE: citus
-    command: haproxy
+    restart: unless-stopped
+    depends_on:
+      - etcd1
+      - etcd2
+      - etcd3
+    logging:
+      options:
+        max-size: ${LOG_MAX_SIZE:-10m}
+        max-file: ${LOG_MAX_FILE:-10}
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '2'
+        reservations:
+          memory: 512M
+          cpus: '1'
 
   # Coordinator
   coord1: &coord-share
-    image: ***REMOVED***/patroni-citus:3.2.2-no-ssl
+    image: ***REMOVED***/patroni-citus:3.2.2-no-ssl2
     container_name: coord1
+    shm_size: 256mb
     environment: &coord_env
       <<: *haproxy_env
       PATRONI_NAME: coord1
       PATRONI_CITUS_GROUP: 0
       PATRONI_POSTGRESQL_DATA_DIR: /home/postgres/data
-    # user: postgres
+    depends_on:
+      - etcd1
+      - etcd2
+      - etcd3
     volumes:
       - ./coord1_data:/home/postgres/data
     logging:
       options:
         max-size: ${LOG_MAX_SIZE:-10m}
         max-file: ${LOG_MAX_FILE:-10}
+    deploy:
+      resources:
+        limits:
+          memory: 10G # ~8% of total RAM for coordinator
+          cpus: '4'
+        reservations:
+          memory: 8G
+          cpus: '2'
 
   coord2:
     <<: *coord-share
     container_name: coord2
+    shm_size: 256mb
     environment:
       <<: *coord_env
       PATRONI_NAME: coord2
@@ -108,6 +256,7 @@ services:
   coord3:
     <<: *coord-share
     container_name: coord3
+    shm_size: 256mb
     environment:
       <<: *coord_env
       PATRONI_NAME: coord3
@@ -117,8 +266,9 @@ services:
 
   # Patroni + PostgreSQL + Citus worker nodes (two worker clusters with two nodes each)
   work1-1: &work-share
-    image: ***REMOVED***/patroni-citus:3.2.2-no-ssl
+    image: ***REMOVED***/patroni-citus:3.2.2-no-ssl2
     container_name: work1-1
+    shm_size: 256mb
     environment: &work1_env
       <<: *haproxy_env
       PATRONI_NAME: work1-1
@@ -127,14 +277,28 @@ services:
     # user: postgres
     volumes:
       - ./work11_data:/home/postgres/data
+    restart: unless-stopped
+    depends_on:
+      - etcd1
+      - etcd2
+      - etcd3
     logging:
       options:
         max-size: ${LOG_MAX_SIZE:-10m}
         max-file: ${LOG_MAX_FILE:-10}
+    deploy:
+      resources:
+        limits:
+          memory: 8G # ~6% of total RAM per worker
+          cpus: '3'
+        reservations:
+          memory: 6G
+          cpus: '1.5'
 
   work1-2:
     <<: *work-share
     container_name: work1-2
+    shm_size: 256mb
     environment:
       <<: *work1_env
       PATRONI_NAME: work1-2
@@ -145,6 +309,7 @@ services:
   work2-1:
     <<: *work-share
     container_name: work2-1
+    shm_size: 256mb
     environment: &work2_env
       <<: *haproxy_env
       PATRONI_NAME: work2-1
@@ -156,18 +321,10 @@ services:
   work2-2:
     <<: *work-share
     container_name: work2-2
+    shm_size: 256mb
     environment:
       <<: *work2_env
       PATRONI_NAME: work2-2
       PATRONI_POSTGRESQL_DATA_DIR: /home/postgres/data
     volumes:
       - ./work22_data:/home/postgres/data
-
-# volumes:
-#   coord1_data:
-#   coord2_data:
-#   coord3_data:
-#   work11_data:
-#   work12_data:
-#   work21_data:
-#   work22_data:

@@ -1,0 +1,23 @@
+---
+- name: Copy cliproxyapi folder
+  copy:
+    src: ./docker/cliproxyapi
+    dest: ~/docker
+    mode: 0755
+
+- name: Pull image cliproxyapi
+  shell: |
+    docker pull eceasy/cli-proxy-api:latest
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/cliproxyapi
+    docker compose down
+
+- name: Start cliproxyapi
+  shell: |
+    cd ~/docker/cliproxyapi
+    export VIRTUAL_HOST={{cliproxyapi_virtual_host}}
+    export LETSENCRYPT_EMAIL={{cliproxyapi_letsencrypt_email}}
+    export NETWORK={{network}}
+    docker compose up -d

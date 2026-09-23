@@ -1,0 +1,47 @@
+---
+- name: Copy code-server folder
+  copy:
+    src: ./docker/code-server
+    dest: ~/docker
+    mode: 0755
+  become: true
+
+- name: Create data folder and subfolders (if not exist)
+  file:
+    path: ~/docker/code-server/data/{{ item }}
+    state: directory
+    mode: 0755
+  with_items:
+    - project
+    - config
+    - local
+    - certs
+    - ssh
+    - projects
+    - labs
+  become: true
+
+- name: Generate self-signed cert (if not exist)
+  # shell, not command: the paths below are ~-relative, and only a shell
+  # expands ~. creates: is expanded by Ansible, so with command: the guard
+  # and the command pointed at different paths and the guard never matched.
+  shell: openssl req -x509 -nodes -newkey rsa:2048 -keyout ~/docker/code-server/data/certs/self-signed.key -out ~/docker/code-server/data/certs/self-signed.crt -days 365 -subj "/CN={{ ansible_host }}"
+  args:
+    creates: ~/docker/code-server/data/certs/self-signed.crt
+  become: true
+
+- name: Pull image code-server
+  shell: |
+    docker pull codercom/code-server:latest
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/code-server
+    docker compose down
+
+- name: Start code-server
+  shell: |
+    cd ~/docker/code-server
+    export PASSWORD={{code_server_password}}
+    docker compose build --no-cache
+    docker compose up -d

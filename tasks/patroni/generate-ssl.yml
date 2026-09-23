@@ -1,0 +1,196 @@
+---
+# Generate local TLS material for docker-compose.prod.yml.
+# Output path intentionally matches compose default when running from /docker/patroni:
+#   PATRONI_SSL_DIR defaults to ./runtime/ssl
+#   /docker/patroni/runtime/ssl/{ca.crt,server.crt,server.key,server.pem}
+#
+# Usage from a playbook:
+#   - import_tasks: ansible/generate-patroni-ssl.yml
+#
+# Optional vars:
+#   patroni_compose_dir: /docker/patroni
+#   patroni_ssl_dir: /docker/patroni/runtime/ssl
+#   patroni_ssl_force_regenerate: false
+#   patroni_ssl_country: VN
+#   patroni_ssl_state: HCM
+#   patroni_ssl_locality: Ho Chi Minh
+#   patroni_ssl_org: Patroni Citus
+#   patroni_ssl_days: 3650
+
+- name: Ensure OpenSSL is installed
+  ansible.builtin.package:
+    name: openssl
+    state: present
+
+- name: Set Patroni TLS paths
+  ansible.builtin.set_fact:
+    patroni_compose_dir_effective: "{{ patroni_compose_dir | default('/docker/patroni') }}"
+    patroni_ssl_dir_effective: "{{ patroni_ssl_dir | default((patroni_compose_dir | default('/docker/patroni')) ~ '/runtime/ssl') }}"
+
+- name: Ensure Patroni TLS directory exists
+  ansible.builtin.file:
+    path: "{{ patroni_ssl_dir_effective }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Check existing Patroni TLS files
+  ansible.builtin.stat:
+    path: "{{ patroni_ssl_dir_effective }}/{{ item }}"
+  loop:
+    - ca.key
+    - ca.crt
+    - server.key
+    - server.crt
+    - server.pem
+  register: patroni_ssl_existing
+
+- name: Decide whether to regenerate Patroni TLS files
+  ansible.builtin.set_fact:
+    patroni_ssl_should_generate: >-
+      {{ patroni_ssl_force_regenerate | default(false) | bool
+         or (patroni_ssl_existing.results | selectattr('stat.exists', 'equalto', false) | list | length > 0) }}
+
+- name: Write OpenSSL config for Patroni TLS certificate
+  ansible.builtin.copy:
+    dest: "{{ patroni_ssl_dir_effective }}/openssl.cnf"
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [ req ]
+      default_bits = 4096
+      prompt = no
+      default_md = sha256
+      distinguished_name = dn
+      req_extensions = req_ext
+
+      [ dn ]
+      C = {{ patroni_ssl_country | default('VN') }}
+      ST = {{ patroni_ssl_state | default('HCM') }}
+      L = {{ patroni_ssl_locality | default('Ho Chi Minh') }}
+      O = {{ patroni_ssl_org | default('Patroni Citus') }}
+      CN = patroni-citus.local
+
+      [ req_ext ]
+      subjectAltName = @alt_names
+      extendedKeyUsage = serverAuth, clientAuth
+
+      [ alt_names ]
+      DNS.1 = patroni-citus.local
+      DNS.2 = localhost
+      DNS.3 = haproxy
+      DNS.4 = pgbouncer
+      DNS.5 = etcd1
+      DNS.6 = etcd2
+      DNS.7 = etcd3
+      DNS.8 = coord1
+      DNS.9 = coord2
+      DNS.10 = coord3
+      DNS.11 = work1-1
+      DNS.12 = work1-2
+      DNS.13 = work2-1
+      DNS.14 = work2-2
+      IP.1 = 127.0.0.1
+      {% if ansible_default_ipv4 is defined and ansible_default_ipv4.address is defined %}
+      IP.2 = {{ ansible_default_ipv4.address }}
+      {% endif %}
+      {% if ansible_host is defined and (ansible_host | regex_search('^([0-9]{1,3}\\.){3}[0-9]{1,3}$')) %}
+      IP.3 = {{ ansible_host }}
+      {% endif %}
+  when: patroni_ssl_should_generate
+
+- name: Remove old Patroni TLS files when regeneration is requested
+  ansible.builtin.file:
+    path: "{{ patroni_ssl_dir_effective }}/{{ item }}"
+    state: absent
+  loop:
+    - ca.key
+    - ca.crt
+    - ca.srl
+    - server.key
+    - server.csr
+    - server.crt
+    - server.pem
+  when: patroni_ssl_should_generate
+
+- name: Generate Patroni private CA key
+  ansible.builtin.command:
+    cmd: openssl genrsa -out {{ patroni_ssl_dir_effective }}/ca.key 4096
+    creates: "{{ patroni_ssl_dir_effective }}/ca.key"
+  when: patroni_ssl_should_generate
+
+- name: Generate Patroni private CA certificate
+  ansible.builtin.command:
+    cmd: >-
+      openssl req -x509 -new -nodes
+      -key {{ patroni_ssl_dir_effective }}/ca.key
+      -sha256
+      -days {{ patroni_ssl_days | default(3650) }}
+      -out {{ patroni_ssl_dir_effective }}/ca.crt
+      -subj "/C={{ patroni_ssl_country | default('VN') }}/ST={{ patroni_ssl_state | default('HCM') }}/L={{ patroni_ssl_locality | default('Ho Chi Minh') }}/O={{ patroni_ssl_org | default('Patroni Citus') }}/CN=patroni-citus-ca"
+    creates: "{{ patroni_ssl_dir_effective }}/ca.crt"
+  when: patroni_ssl_should_generate
+
+- name: Generate Patroni server/client key
+  ansible.builtin.command:
+    cmd: openssl genrsa -out {{ patroni_ssl_dir_effective }}/server.key 4096
+    creates: "{{ patroni_ssl_dir_effective }}/server.key"
+  when: patroni_ssl_should_generate
+
+- name: Generate Patroni server/client CSR
+  ansible.builtin.command:
+    cmd: >-
+      openssl req -new
+      -key {{ patroni_ssl_dir_effective }}/server.key
+      -out {{ patroni_ssl_dir_effective }}/server.csr
+      -config {{ patroni_ssl_dir_effective }}/openssl.cnf
+    creates: "{{ patroni_ssl_dir_effective }}/server.csr"
+  when: patroni_ssl_should_generate
+
+- name: Sign Patroni server/client certificate
+  ansible.builtin.command:
+    cmd: >-
+      openssl x509 -req
+      -in {{ patroni_ssl_dir_effective }}/server.csr
+      -CA {{ patroni_ssl_dir_effective }}/ca.crt
+      -CAkey {{ patroni_ssl_dir_effective }}/ca.key
+      -CAcreateserial
+      -out {{ patroni_ssl_dir_effective }}/server.crt
+      -days {{ patroni_ssl_days | default(3650) }}
+      -sha256
+      -extensions req_ext
+      -extfile {{ patroni_ssl_dir_effective }}/openssl.cnf
+    creates: "{{ patroni_ssl_dir_effective }}/server.crt"
+  when: patroni_ssl_should_generate
+
+- name: Build HAProxy combined PEM
+  ansible.builtin.shell: |
+    set -euo pipefail
+    cat "{{ patroni_ssl_dir_effective }}/server.key" "{{ patroni_ssl_dir_effective }}/server.crt" > "{{ patroni_ssl_dir_effective }}/server.pem"
+  args:
+    executable: /bin/bash
+    creates: "{{ patroni_ssl_dir_effective }}/server.pem"
+  when: patroni_ssl_should_generate
+
+- name: Secure Patroni TLS files
+  ansible.builtin.file:
+    path: "{{ patroni_ssl_dir_effective }}/{{ item.name }}"
+    owner: root
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { name: ca.key, group: root, mode: "0600" }
+    - { name: server.key, group: "{{ patroni_container_gid | default(999) }}", mode: "0640" }
+    - { name: server.pem, group: "{{ patroni_container_gid | default(999) }}", mode: "0640" }
+    - { name: ca.crt, group: root, mode: "0644" }
+    - { name: server.crt, group: root, mode: "0644" }
+    - { name: openssl.cnf, group: root, mode: "0644" }
+
+- name: Show generated Patroni TLS files
+  ansible.builtin.debug:
+    msg:
+      - "Patroni TLS files are in {{ patroni_ssl_dir_effective }}"
+      - "Set PATRONI_SSL_DIR={{ patroni_ssl_dir_effective }} before docker compose up"
+  when: patroni_ssl_should_generate

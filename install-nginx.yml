@@ -5,9 +5,5 @@
 
   gather_facts: yes
 
-  vars_files:
-    - vars/common.yml
-    - vars/nginx.yml
-
   tasks:
     - import_tasks: tasks/install-nginx.yml

@@ -1,0 +1,84 @@
+services:
+  redis-master:
+    image: redis:7-alpine
+    container_name: redis-master
+    hostname: redis-master
+    restart: always
+    volumes:
+      - "./data/redis-master:/data"
+    ports:
+      - "{{ master_port }}:6379"
+    networks:
+      - default
+    command: redis-server --requirepass {{ redis_password }} --masterauth {{ redis_password }} --protected-mode yes --maxclients 100000
+    sysctls:
+      - net.core.somaxconn=1024
+    # Đảm bảo container khởi động hoàn toàn trước khi các container khác phụ thuộc vào nó
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "{{ redis_password }}", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+{% for i in range(1, replica_scale_factor | int + 1) %}
+  redis-replica-{{ i }}:
+    image: redis:7-alpine
+    container_name: redis-replica-{{ i }}
+    hostname: redis-replica-{{ i }}
+    restart: always
+    volumes:
+      - "./data/redis-replica-{{ i }}:/data"
+    ports:
+      - 6379
+    networks:
+      - default
+    command: redis-server --slaveof redis-master 6379 --requirepass {{ redis_password }} --masterauth {{ redis_password }} --protected-mode yes --maxclients 100000
+    sysctls:
+      - net.core.somaxconn=1024
+    depends_on:
+      redis-master:
+        condition: service_healthy
+{% endfor %}
+
+{% for i in range(1, sentinel_scale_factor | int + 1) %}
+  sentinel-{{ i }}:
+    image: redis:7-alpine
+    container_name: sentinel-{{ i }}
+    hostname: sentinel-{{ i }}
+    restart: always
+    volumes:
+      - "./data/sentinel-{{ i }}:/data"
+      - "./sentinel.conf:/sentinel.conf"
+    ports:
+      - "{{ sentinel_port + i }}:26379"
+    networks:
+      - default
+    command: >
+      sh -c "
+        echo 'port 26379' > /etc/sentinel.conf &&
+        echo 'dir /data' >> /etc/sentinel.conf &&
+        echo 'sentinel resolve-hostnames yes' >> /etc/sentinel.conf &&
+        echo 'sentinel announce-hostnames yes' >> /etc/sentinel.conf &&
+        echo 'sentinel monitor mymaster redis-master 6379 {% if sentinel_scale_factor | int > 1 %}{{ (sentinel_scale_factor | int / 2) | round(0, 'ceil') | int }}{% else %}1{% endif %}' >> /etc/sentinel.conf &&
+        echo 'sentinel auth-pass mymaster {{ redis_password }}' >> /etc/sentinel.conf &&
+        echo 'sentinel down-after-milliseconds mymaster {{ sentinel_down_after }}' >> /etc/sentinel.conf &&
+        echo 'sentinel parallel-syncs mymaster {{ sentinel_parallel_syncs }}' >> /etc/sentinel.conf &&
+        echo 'sentinel failover-timeout mymaster {{ sentinel_failover_timeout }}' >> /etc/sentinel.conf &&
+        redis-sentinel /etc/sentinel.conf
+      "
+
+    sysctls:
+      - net.core.somaxconn=1024
+    depends_on:
+      redis-master:
+        condition: service_healthy
+{% for j in range(1, replica_scale_factor | int + 1) %}
+      redis-replica-{{ j }}:
+        condition: service_started
+{% endfor %}
+{% endfor %}
+
+networks:
+  default:
+    name: {{ network }}
+    external: true

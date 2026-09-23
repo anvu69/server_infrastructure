@@ -1,0 +1,24 @@
+---
+- name: Copy rustdesk folder
+  copy:
+    src: ./docker/rustdesk
+    dest: ~/docker
+    mode: 0755
+
+- name: Pull image rustdesk
+  shell: |
+    docker pull rustdesk/rustdesk-server:latest
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/rustdesk
+    docker compose down
+
+- name: Start rustdesk
+  shell: |
+    cd ~/docker/rustdesk
+    export SERVER_VIRTUAL_HOST={{server_host}}
+    export RELAY_VIRTUAL_HOST={{relay_host}}
+    export LETSENCRYPT_EMAIL={{common_letsencrypt_email}}
+    export NETWORK={{network}}
+    docker compose up -d

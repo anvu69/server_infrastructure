@@ -1,0 +1,13 @@
+scope: demo
+namespace: /service
+name: work2-2
+
+restapi:
+  connect_address: work2-2:8008
+
+citus:
+  group: 2
+  database: citus
+
+postgresql:
+  connect_address: work2-2:5432

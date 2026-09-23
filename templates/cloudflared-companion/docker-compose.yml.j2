@@ -1,0 +1,27 @@
+services:
+{% for account in cloudflare_accounts %}
+  cloudflared-companion-{{ account.name }}:
+    image: ghcr.io/***REMOVED***/cloudflared-companion:latest
+    container_name: cloudflared-companion-{{ account.name }}
+    restart: unless-stopped
+    environment:
+      - TUNNEL_TOKEN={{ account.tunnel_token }}
+      - TUNNEL_ID={{ account.tunnel_id }}
+      - API_TOKEN={{ account.api_token }}
+      - ACCOUNT_NAME={{ account.name }}
+      - DOCKER_NETWORK=cloudflare-{{ account.name }}-net
+      - TUNNEL_ORIGIN_CERT=/etc/cloudflared/cert.pem
+      - CERT_RENEWAL_THRESHOLD=30
+    volumes:
+      - ./config-{{ account.name }}:/etc/cloudflared/
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - {{ account.name }}
+{% endfor %}
+
+networks:
+{% for account in cloudflare_accounts %}
+  {{ account.name }}:
+    name: cloudflare-{{ account.name }}-net
+    external: true
+{% endfor %}

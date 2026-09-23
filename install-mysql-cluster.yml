@@ -1,0 +1,7 @@
+---
+- name: Deploy MySQL Cluster with High Availability
+  hosts: all
+  become: yes
+  tasks:
+    - name: Include MySQL cluster tasks
+      include_tasks: tasks/mysql-cluster/start.yml

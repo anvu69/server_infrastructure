@@ -1,0 +1,28 @@
+---
+- name: Copy Odoo folder
+  copy: 
+    src: ./docker/odoo
+    dest: ~/docker
+    mode: 0755
+    
+- name: Shut down service
+  shell: |
+    cd ~/docker/odoo
+    export VIRTUAL_PORT={{odoo_virtual_port}}
+    docker compose down
+
+- name: Start Odoo
+  shell: |
+    cd ~/docker/odoo
+    export POSTGRES_HOST={{postgres_host}}
+    export POSTGRES_USER={{postgres_user}}
+    export POSTGRES_PASSWORD={{odoo_postgres_password}}
+    export LANGUAGE={{language}}
+    export VIRTUAL_HOST={{odoo_virtual_host}}
+    export VIRTUAL_PORT={{odoo_virtual_port}}
+    export LETSENCRYPT_HOST={{odoo_virtual_host}}
+    export LETSENCRYPT_EMAIL={{odoo_letsencrypt_email}}
+    export NETWORK={{network}}
+    export LOG_MAX_SIZE={{log_max_size}}
+    export LOG_MAX_FILE={{log_max_file}}
+    docker compose up -d

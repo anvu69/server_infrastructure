@@ -1,0 +1,28 @@
+---
+- name: Copy vaultwarden folder
+  copy:
+    src: ./docker/vaultwarden
+    dest: ~/docker
+    mode: 0755
+
+- name: Pull image vaultwarden
+  shell: |
+    docker pull vaultwarden/server:latest
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/vaultwarden
+    docker compose down
+
+- name: Start vaultwarden
+  shell: |
+    cd ~/docker/vaultwarden
+    export NETWORK={{network}}
+    export VIRTUAL_HOST={{vaultwarden_virtual_host}}
+    export ADMIN_TOKEN="{{vaultwarden_admin_token}}"
+    export POSTGRESQL_HOST={{vaultwarden_pg_host}}
+    export PORTGRESQL_PORT={{vaultwarden_pg_port}}
+    export POSTGRES_DATABASE={{vaultwarden_pg_database}}
+    export POSTGRESQL_USERNAME={{vaultwarden_pg_user}}
+    export POSTGRESQL_PASSWORD={{pg_pass}}
+    docker compose up -d

@@ -7,11 +7,6 @@
 
   gather_facts: yes
 
-  vars_files:
-    - vars/common.yml
-    - vars/timezone.yml
-    - vars/nginx.yml
-
   roles:
     - role: asapdotid.zsh
     - role: geerlingguy.git

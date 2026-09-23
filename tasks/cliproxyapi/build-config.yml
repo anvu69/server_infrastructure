@@ -1,0 +1,12 @@
+---
+- name: Ensure cliproxyapi deploy directory exists
+  file:
+    path: "~/docker/cliproxyapi"
+    state: directory
+    mode: "0750"
+
+- name: Render cli-proxy-api config
+  template:
+    src: ../../templates/cliproxyapi/config.yaml.j2
+    dest: "~/docker/cliproxyapi/config.yaml"
+    mode: "0600"

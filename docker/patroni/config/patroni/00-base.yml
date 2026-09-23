@@ -1,0 +1,108 @@
+log:
+  level: INFO
+  loggers:
+    patroni.postgresql.mpp.citus: DEBUG
+
+restapi:
+  listen: 0.0.0.0:8008
+  certfile: /etc/postgresql/certs/server.crt
+  keyfile: /etc/postgresql/certs/server.key
+  verify_client: required
+  cafile: /etc/postgresql/certs/ca.crt
+  request_queue_size: 100
+
+ctl:
+  certfile: /etc/postgresql/certs/server.crt
+  keyfile: /etc/postgresql/certs/server.key
+  cacert: /etc/postgresql/certs/ca.crt
+
+etcd3:
+  hosts: etcd1:2379,etcd2:2379,etcd3:2379
+
+bootstrap:
+  dcs:
+    ttl: 40
+    loop_wait: 10
+    retry_timeout: 15
+    maximum_lag_on_failover: 1048576
+    synchronous_mode: quorum
+    synchronous_mode_strict: false
+    postgresql:
+      use_pg_rewind: true
+      pg_hba:
+      - local all all trust
+      - host all all 127.0.0.1/32 trust
+      - host all all ::1/128 trust
+      - hostssl replication replicator all scram-sha-256
+      - hostssl all all all scram-sha-256
+      parameters:
+        shared_preload_libraries: "citus,pg_stat_statements"
+        max_prepared_transactions: 4000
+        citus.max_intermediate_result_size: "1GB"
+        citus.max_cached_conns_per_worker: 10
+        password_encryption: scram-sha-256
+        ssl: "on"
+        ssl_cert_file: /etc/postgresql/certs/server.crt
+        ssl_key_file: /etc/postgresql/certs/server.key
+        ssl_ca_file: /etc/postgresql/certs/ca.crt
+        citus.node_conninfo: "sslrootcert=/etc/postgresql/certs/ca.crt sslkey=/etc/postgresql/certs/server.key sslcert=/etc/postgresql/certs/server.crt sslmode=verify-ca"
+        max_connections: 500
+        superuser_reserved_connections: 10
+        max_wal_senders: 20
+        max_replication_slots: 20
+        max_worker_processes: 24
+        max_parallel_workers: 12
+        max_parallel_workers_per_gather: 4
+        max_parallel_maintenance_workers: 4
+        wal_level: logical
+        max_wal_size: 16GB
+        min_wal_size: 2GB
+        checkpoint_completion_target: 0.9
+        checkpoint_timeout: 15min
+        wal_compression: "on"
+        full_page_writes: "on"
+        wal_buffers: 16MB
+        autovacuum: "on"
+        autovacuum_max_workers: 4
+        autovacuum_naptime: 30s
+        autovacuum_vacuum_threshold: 100
+        autovacuum_analyze_threshold: 100
+        autovacuum_vacuum_scale_factor: 0.05
+        autovacuum_analyze_scale_factor: 0.02
+        statement_timeout: 0
+        lock_timeout: 30000
+        idle_in_transaction_session_timeout: 3600000
+        random_page_cost: 1.1
+        seq_page_cost: 1.0
+        effective_io_concurrency: 200
+        log_destination: stderr
+        log_collector: "off"
+        log_statement: none
+        log_min_duration_statement: 1000
+        log_checkpoints: "on"
+        log_lock_waits: "on"
+        track_activities: "on"
+        track_counts: "on"
+        track_io_timing: "on"
+        shared_buffers: 4GB
+        effective_cache_size: 12GB
+        work_mem: 64MB
+        maintenance_work_mem: 1GB
+        synchronous_commit: "off"
+        lc_messages: en_US.UTF-8
+        lc_monetary: en_US.UTF-8
+        lc_numeric: en_US.UTF-8
+        lc_time: en_US.UTF-8
+        timezone: Asia/Ho_Chi_Minh
+        log_timezone: Asia/Ho_Chi_Minh
+  initdb:
+  - encoding: UTF8
+  - locale: en_US.UTF-8
+  - data-checksums
+
+postgresql:
+  listen: 0.0.0.0:5432
+  data_dir: /home/postgres/data
+  bin_dir: /usr/lib/postgresql/17/bin
+  basebackup:
+    checkpoint: fast

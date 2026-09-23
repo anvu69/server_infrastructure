@@ -1,0 +1,26 @@
+---
+- name: Copy wordpress folder
+  copy: 
+    src: ./docker/wordpress
+    dest: ~/docker
+    mode: 0755
+    
+- name: Shut down wordpress
+  shell: |
+    cd ~/docker/wordpress
+    docker compose down
+
+- name: Start wordpress
+  shell: |
+    cd ~/docker/wordpress
+    export VIRTUAL_HOST={{wordpress_virtual_host}}
+    export LETSENCRYPT_EMAIL={{common_letsencrypt_email}}
+    export DATABASE_ROOT_PASSWORD={{database_root_password}}
+    export DATABASE_USER={{database_user}}
+    export DATABASE_PASSWORD={{database_password}}
+    export DATABASE_NAME={{database_name}}
+    export MARIADB_EXPOSED_PORT={{mariadb_exposed_port}}
+    export NETWORK={{network}}
+    export LOG_MAX_SIZE={{log_max_size}}
+    export LOG_MAX_FILE={{log_max_file}}
+    docker compose up -d

@@ -19,10 +19,9 @@
     export KC_DB_PASSWORD={{db_password}}
     export KC_REALM_NAME={{realm_name}}
     export KEYCLOAK_ADMIN={{admin_username}}
-    export KEYCLOAK_ADMIN_PASSWORD={{admin_password}}
-    export KEYCLOAK_SECRET={{secret}}
+    export KEYCLOAK_ADMIN_PASSWORD={{keycloak_admin_password}}
     export NETWORK={{network}}
-    export LETSENCRYPT_EMAIL={{letsencrypt_email}}
+    export LETSENCRYPT_EMAIL={{common_letsencrypt_email}}
     export VIRTUAL_HOST={{host}}
     export LOG_MAX_SIZE={{log_max_size}}
     export LOG_MAX_FILE={{log_max_file}}

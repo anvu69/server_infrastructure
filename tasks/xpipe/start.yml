@@ -1,0 +1,25 @@
+---
+- name: Copy xpipe folder
+  copy:
+    src: ./docker/xpipe
+    dest: ~/docker
+    mode: 0755
+
+- name: Pull image xpipe
+  shell: |
+    docker pull ghcr.io/xpipe-io/xpipe-webtop:latest
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/xpipe
+    docker compose down
+
+- name: Start xpipe
+  shell: |
+    cd ~/docker/xpipe
+    export USER={{xpipe_user}}
+    export PASSWORD={{xpipe_password}}
+    export NETWORK={{network}}
+    export VIRTUAL_HOST={{xpipe_virtual_host}}
+    export LETSENCRYPT_EMAIL={{xpipe_letsencrypt_email}}
+    docker compose up -d
