@@ -1,0 +1,7 @@
+---
+- name: Pre-deploy Postgres
+  shell: |
+    cd ~/docker
+    if [ ! -d "pg" ]; then
+      mkdir -p pg
+    fi

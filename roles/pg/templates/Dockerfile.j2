@@ -1,0 +1,2 @@
+FROM postgres:{{pg_tag}}
+COPY init_schema.sql /docker-entrypoint-initdb.d/

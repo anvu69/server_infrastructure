@@ -1,0 +1,23 @@
+---
+- name: Ensure redis deploy directory exists
+  file:
+    path: "~/docker/{{ redis_deploy_path }}"
+    state: directory
+    mode: 0755
+
+- name: Copy redis docker-compose.yml
+  copy:
+    src: docker-compose.yml
+    dest: "~/docker/{{ redis_deploy_path }}/docker-compose.yml"
+    mode: 0644
+
+- name: Shut down service
+  shell: |
+    cd ~/docker/{{ redis_deploy_path }}
+    docker compose down
+
+- name: Start redis
+  shell: |
+    cd ~/docker/{{ redis_deploy_path }}
+    export NETWORK={{ network }}
+    docker compose up -d
