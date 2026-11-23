@@ -14,12 +14,16 @@ patroni_docker_network: patroni_citus
 patroni_container_uid: 999
 patroni_container_gid: 999
 patroni_image: anvu69/patroni-citus:4.1.3-pgbr
-patroni_compose_pull: true
-patroni_compose_stop_before_start: true
+# Keep running containers and local image tags unchanged on deployment.
+patroni_compose_recreate: false
+patroni_compose_pull: false
+patroni_compose_stop_before_start: false
 patroni_compose_down_before_start: false
 patroni_compose_stop_timeout: 60
 patroni_scope: demo
 patroni_namespace: /service
+# Match the existing database when deploying onto a running cluster.
+patroni_citus_database: citus
 patroni_etcd_initial_cluster_token: citus-cluster
 patroni_restapi_username: admin
 patroni_restapi_password: "{{ vault_patroni_restapi_password }}"
@@ -72,6 +76,8 @@ patroni_pgbouncer_ignore_startup_parameters: extra_float_digits,options
 
 # pgBackRest: one stanza per Citus group; private Backblaze B2 bucket via its S3 API.
 patroni_pgbackrest_backup_command_path: /usr/local/bin/pgbackrest-citus
+# Keep the legacy path until all PostgreSQL containers mount the config directory.
+# patroni_pgbackrest_container_config: /var/log/pgbackrest/conf/pgbackrest.conf
 patroni_pgbackrest_stanza_coord: coord
 patroni_pgbackrest_stanza_worker1: worker1
 patroni_pgbackrest_stanza_worker2: worker2

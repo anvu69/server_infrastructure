@@ -42,8 +42,8 @@ through PgBouncer and HAProxy to the current coordinator primary.
    ansible-playbook -i inventories/prod install-patroni-pgbackrest.yml
    ```
 
-5. When all three primaries are up, run these on the Docker host as a user
-   with Docker access:
+5. For a fresh cluster, once all three primaries are up and every node mounts
+   the config directory at `/etc/pgbackrest`, run these on the Docker host:
 
    ```sh
    for group in coord worker1 worker2; do
@@ -55,15 +55,67 @@ through PgBouncer and HAProxy to the current coordinator primary.
    pgbackrest-citus info
    ```
 
-   On an existing cluster, apply the archive config to each group before its
-   first backup. If `archive_mode` was previously off, roll-restart that group
-   after applying the config and before running `check`. Apply the image and
-   mount changes before enabling archiving. Initialize the stanzas promptly:
-   PostgreSQL retains unarchived WAL if the repository is unavailable.
+   Initialize the stanzas promptly: PostgreSQL retains unarchived WAL if the
+   repository is unavailable. For an existing production stack, follow the
+   rollout below instead.
 
 By default, the runtime files are under `/docker/patroni/runtime` and
 PgBouncer is published on `127.0.0.1:26432`. Keep the PostgreSQL and etcd data
 directories on fast local storage.
+
+## Production host đang chạy
+
+**Before running either playbook**, match the inventory to the live stack:
+keep its data and config mount paths, Compose network, scope/namespace, etcd
+token, database, image tags, ports, and credentials. If the PostgreSQL
+containers still use the legacy pgBackRest config, set
+`patroni_pgbackrest_container_config: /var/log/pgbackrest/conf/pgbackrest.conf`
+before deploying. Ansible also renders the config under the existing log mount,
+so the current DCS archive command and nightly backup keep using the same path.
+
+On the first `install-patroni.yml` run, leave `patroni_compose_recreate`,
+`patroni_compose_pull`, `patroni_compose_stop_before_start`, and
+`patroni_compose_down_before_start` unset or `false`. The playbook syncs files
+and prints the Compose dry-run before `up -d --no-recreate`: running containers
+are not restarted or recreated. Compose starts stopped containers and creates
+missing ones. Do not run Compose concurrently with the file sync. Afterward,
+run manual Compose commands from the deployment directory (default
+`/docker/patroni`) as root so Compose can read the managed `.env`. Do not
+source it or override its values with exported variables.
+
+Apply new image or mount settings only when needed, one service at a time:
+
+```sh
+docker compose up -d --no-deps --force-recreate <service>
+```
+
+1. Handle one Citus group at a time (`0` coordinator, `1` worker1, `2`
+   worker2). Recreate replicas first. After each node, run `patronictl list`
+   and wait for the replica to be streaming with zero lag. Run
+   `patronictl switchover --group N` from a healthy Patroni node, targeting an
+   updated replica. Verify the new primary before recreating the former
+   primary, then verify it is streaming with zero lag.
+2. Recreate etcd members one at a time. After each, wait for `etcdctl endpoint
+   health` to report all three endpoints healthy before moving on.
+3. Recreate `haproxy` and `pgbouncer` last. Expect brief client disconnects;
+   schedule the change and make sure clients reconnect.
+
+Keep the legacy pgBackRest path through the rollout. **Do not run
+`apply-archive-config` until every node in that group mounts the config
+directory at `/etc/pgbackrest`.** Once all PostgreSQL nodes have the directory
+mount, remove the override and rerun `install-patroni-pgbackrest.yml`. Then
+run the commands below on the Docker host. If a group's `archive_mode` was
+previously off, run the commands for that group separately: roll-restart it
+after applying the archive config and before running `check`.
+
+```sh
+for group in coord worker1 worker2; do
+  pgbackrest-citus apply-archive-config "$group" || break
+  pgbackrest-citus check "$group" || break
+done
+```
+
+Remove `<log dir>/conf` only after all three checks succeed.
 
 ## Operational notes
 
@@ -82,9 +134,3 @@ directories on fast local storage.
 - `patronictl edit-config` needs `--group`: `0` for the coordinator, `1` for
   worker1, and `2` for worker2. Bootstrap YAML does not overwrite an existing
   group's dynamic configuration.
-- Roll upgrades one group and one node at a time. Recreate replicas first
-  and check replication after each, switch over to an upgraded replica, then
-  recreate the former leader. Use `docker compose up -d --no-deps <node>`
-  with the deployment's Compose environment to apply image or mount changes;
-  `restart` alone does not. Do not use the full deployment playbook for a
-  rolling upgrade: it stops the stack by default.

@@ -197,5 +197,4 @@
   ansible.builtin.debug:
     msg:
       - "Patroni TLS files are in {{ patroni_ssl_dir_effective }}"
-      - "Set PATRONI_SSL_DIR={{ patroni_ssl_dir_effective }} before docker compose up"
   when: patroni_ssl_should_generate

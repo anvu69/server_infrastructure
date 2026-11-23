@@ -58,12 +58,13 @@ stanza_for_group() {
 run_pgbackrest() {
   local container="$1"
   shift
-  docker exec -u postgres "$container" pgbackrest --config=/etc/pgbackrest/pgbackrest.conf "$@"
+  docker exec -u postgres "$container" pgbackrest --config={{ patroni_pgbackrest_container_config | default('/etc/pgbackrest/pgbackrest.conf') | quote }} "$@"
 }
 
 case "$command" in
   apply-archive-config)
     [ -n "$group" ] || { usage; exit 2; }
+    echo "Warning: run apply-archive-config only after every node in this group mounts the config directory at /etc/pgbackrest." >&2
     container="$(primary_container_for_group "$group")"
     # Each Citus group has its own dynamic configuration in the DCS.
     case "$group" in

@@ -17,4 +17,4 @@ case "$(hostname)" in
     ;;
 esac
 
-exec pgbackrest --config=/etc/pgbackrest/pgbackrest.conf --stanza="$stanza" archive-push "$1"
+exec pgbackrest --config={{ patroni_pgbackrest_container_config | default('/etc/pgbackrest/pgbackrest.conf') | quote }} --stanza="$stanza" archive-push "$1"

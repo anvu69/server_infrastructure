@@ -41,14 +41,6 @@
     - etcd2
     - etcd3
 
-- name: Copy docker compose file
-  ansible.builtin.copy:
-    src: ./docker/patroni/docker-compose.yml
-    dest: "{{ patroni_compose_dir }}/docker-compose.yml"
-    owner: root
-    group: root
-    mode: "0644"
-
 - name: Copy Patroni base config
   ansible.builtin.copy:
     src: ./docker/patroni/config/patroni/00-base.yml
@@ -72,3 +64,32 @@
     - work1-2
     - work2-1
     - work2-2
+
+- name: Generate Patroni SSL files
+  ansible.builtin.import_tasks: generate-ssl.yml
+
+- name: Render HAProxy confd template
+  ansible.builtin.import_tasks: generate-haproxy-config.yml
+
+- name: Render PgBouncer config
+  ansible.builtin.import_tasks: generate-pgbouncer-config.yml
+
+- name: Render pgBackRest config
+  ansible.builtin.import_tasks: generate-pgbackrest-config.yml
+
+- name: Copy docker compose file
+  ansible.builtin.copy:
+    src: ./docker/patroni/docker-compose.yml
+    dest: "{{ patroni_compose_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Render managed Compose dotenv
+  ansible.builtin.template:
+    src: templates/patroni/env.j2
+    dest: "{{ patroni_compose_dir }}/.env"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true

@@ -39,4 +39,3 @@
   ansible.builtin.debug:
     msg:
       - "PgBouncer config rendered to {{ patroni_pgbouncer_config_dir_effective }}/pgbouncer.ini"
-      - "Set PATRONI_PGBOUNCER_CONFIG_DIR={{ patroni_pgbouncer_config_dir_effective }} before docker compose up"

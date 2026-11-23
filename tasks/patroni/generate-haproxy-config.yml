@@ -24,4 +24,3 @@
   ansible.builtin.debug:
     msg:
       - "HAProxy confd template rendered to {{ patroni_haproxy_template_dir_effective }}/haproxy-citus.tmpl"
-      - "Set PATRONI_HAPROXY_TEMPLATE_DIR={{ patroni_haproxy_template_dir_effective }} before docker compose up"
