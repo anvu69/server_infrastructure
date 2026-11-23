@@ -1,0 +1,54 @@
+---
+- name: Inspect the dedicated tunnel network
+  ansible.builtin.command:
+    argv:
+      - docker
+      - network
+      - inspect
+      - "{{ cloudflared_tunnel_network | default('patroni_tunnel') }}"
+  register: cloudflared_tunnel_network_inspect
+  changed_when: false
+  failed_when: false
+
+- name: Require the Patroni tunnel network
+  ansible.builtin.fail:
+    msg: >-
+      Docker network {{ cloudflared_tunnel_network | default('patroni_tunnel') }} is unavailable;
+      run install-patroni.yml first. {{ cloudflared_tunnel_network_inspect.stderr }}
+  when: cloudflared_tunnel_network_inspect.rc != 0
+
+- name: Create the tunnel deployment directory
+  ansible.builtin.file:
+    path: ~/docker/cloudflared-tunnel
+    state: directory
+    mode: "0755"
+
+- name: Copy the tunnel Compose file
+  ansible.builtin.copy:
+    src: ./docker/cloudflared-tunnel/docker-compose.yml
+    dest: ~/docker/cloudflared-tunnel/docker-compose.yml
+    mode: "0644"
+
+- name: Render the tunnel environment
+  ansible.builtin.template:
+    src: templates/cloudflared-tunnel/env.j2
+    dest: ~/docker/cloudflared-tunnel/.env
+    mode: "0600"
+  no_log: true
+
+- name: Start the Cloudflare tunnel
+  ansible.builtin.command:
+    cmd: docker compose up -d
+    chdir: ~/docker/cloudflared-tunnel
+  no_log: true
+
+- name: Read the tunnel Compose status
+  ansible.builtin.command:
+    cmd: docker compose ps
+    chdir: ~/docker/cloudflared-tunnel
+  register: cloudflared_tunnel_compose_ps
+  changed_when: false
+
+- name: Print the tunnel Compose status
+  ansible.builtin.debug:
+    var: cloudflared_tunnel_compose_ps.stdout_lines

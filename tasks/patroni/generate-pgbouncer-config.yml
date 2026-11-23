@@ -15,6 +15,25 @@
     group: root
     mode: "0755"
 
+- name: Ensure PgBouncer client TLS directory exists
+  ansible.builtin.file:
+    path: "{{ patroni_pgbouncer_config_dir_effective }}/tls"
+    state: directory
+    owner: "{{ patroni_pgbouncer_container_uid | default(70) }}"
+    group: "{{ patroni_pgbouncer_container_gid | default(70) }}"
+    mode: "0700"
+
+- name: Copy private key for PgBouncer client TLS
+  ansible.builtin.copy:
+    src: "{{ patroni_ssl_dir_effective }}/server.key"
+    dest: "{{ patroni_pgbouncer_config_dir_effective }}/tls/server.key"
+    remote_src: true
+    owner: "{{ patroni_pgbouncer_container_uid | default(70) }}"
+    group: "{{ patroni_pgbouncer_container_gid | default(70) }}"
+    mode: "0600"
+  when: patroni_pgbouncer_client_tls_sslmode | default('') != ''
+  no_log: true
+
 - name: Render PgBouncer config
   ansible.builtin.template:
     src: templates/patroni/pgbouncer.ini.j2

@@ -79,8 +79,12 @@ x-patroni-service: &patroni-service
     start_period: 60s
 
 networks:
+  # Keep the existing Compose network key so running stacks can reuse the bridge.
   citus:
     name: ${PATRONI_DOCKER_NETWORK:-patroni_citus}
+    driver: bridge
+  tunnel:
+    name: ${PATRONI_TUNNEL_NETWORK:-patroni_tunnel}
     driver: bridge
 
 services:
@@ -165,7 +169,7 @@ services:
     hostname: pgbouncer
     restart: unless-stopped
     oom_score_adj: ${PATRONI_OOM_SCORE_ADJ:--800}
-    networks: [citus]
+    networks: [citus, tunnel]
     depends_on:
       - haproxy
     environment:
@@ -183,11 +187,12 @@ services:
       SERVER_TLS_CA_FILE: /etc/postgresql/certs/ca.crt
       IGNORE_STARTUP_PARAMETERS: extra_float_digits,options
     ports:
-      # Client -> PgBouncer is not TLS; keep it off public interfaces.
+      # Client TLS is optional; keep the host port off public interfaces.
       - "${PATRONI_PGBOUNCER_BIND:-127.0.0.1}:${PATRONI_PGBOUNCER_PORT:-26432}:5432"
     volumes:
       - ${PATRONI_SSL_DIR:-./runtime/ssl}:/etc/postgresql/certs:ro,z
       - ${PATRONI_PGBOUNCER_CONFIG_DIR:-./runtime/pgbouncer}/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro,z
+      - ${PATRONI_PGBOUNCER_CONFIG_DIR:-./runtime/pgbouncer}/tls:/etc/pgbouncer/tls:ro,z
       # The entrypoint appends DB_USER when missing; app users survive container recreation.
       - ${PATRONI_PGBOUNCER_CONFIG_DIR:-./runtime/pgbouncer}/userlist.txt:/etc/pgbouncer/userlist.txt:z
 

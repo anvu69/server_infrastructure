@@ -14,5 +14,11 @@ reserve_pool_size = {{ patroni_pgbouncer_reserve_pool_size | default(20) }}
 ignore_startup_parameters = {{ patroni_pgbouncer_ignore_startup_parameters | default('extra_float_digits,options') }}
 server_tls_sslmode = {{ patroni_pgbouncer_server_tls_sslmode | default('verify-ca') }}
 server_tls_ca_file = /etc/postgresql/certs/ca.crt
+{% if patroni_pgbouncer_client_tls_sslmode | default('') != '' -%}
+client_tls_sslmode = {{ patroni_pgbouncer_client_tls_sslmode }}
+client_tls_key_file = /etc/pgbouncer/tls/server.key
+client_tls_cert_file = /etc/postgresql/certs/server.crt
+client_tls_ca_file = /etc/postgresql/certs/ca.crt
+{% endif -%}
 admin_users = {{ patroni_pgbouncer_admin_users | default(patroni_pgbouncer_db_user | default(patroni_superuser_username | default('postgres'))) }}
 stats_users = {{ patroni_pgbouncer_stats_users | default(patroni_pgbouncer_db_user | default(patroni_superuser_username | default('postgres'))) }}

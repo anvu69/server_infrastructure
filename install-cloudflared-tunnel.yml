@@ -1,0 +1,12 @@
+---
+- name: Deploy Cloudflare Workers VPC tunnel
+  hosts: all
+  gather_facts: false
+
+  pre_tasks:
+    - import_tasks: tasks/common/only-on-service-hosts.yml
+      vars:
+        service: cloudflared-tunnel
+
+  tasks:
+    - import_tasks: tasks/cloudflared-tunnel/start.yml
