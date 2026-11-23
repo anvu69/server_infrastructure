@@ -1,3 +1,4 @@
+---
 log:
   level: INFO
   loggers:
@@ -30,11 +31,11 @@ bootstrap:
     postgresql:
       use_pg_rewind: true
       pg_hba:
-      - local all all trust
-      - host all all 127.0.0.1/32 trust
-      - host all all ::1/128 trust
-      - hostssl replication replicator all scram-sha-256
-      - hostssl all all all scram-sha-256
+        - local all all trust
+        - host all all 127.0.0.1/32 trust
+        - host all all ::1/128 trust
+        - hostssl replication replicator all scram-sha-256
+        - hostssl all all all scram-sha-256
       parameters:
         shared_preload_libraries: "citus,pg_stat_statements"
         max_prepared_transactions: 4000
@@ -55,6 +56,9 @@ bootstrap:
         max_parallel_workers_per_gather: 4
         max_parallel_maintenance_workers: 4
         wal_level: logical
+        archive_mode: "on"
+        archive_command: "/etc/pgbackrest/pgbackrest-archive-push.sh %p"
+        archive_timeout: 60s
         max_wal_size: 16GB
         min_wal_size: 2GB
         checkpoint_completion_target: 0.9
@@ -96,9 +100,9 @@ bootstrap:
         timezone: Asia/Ho_Chi_Minh
         log_timezone: Asia/Ho_Chi_Minh
   initdb:
-  - encoding: UTF8
-  - locale: en_US.UTF-8
-  - data-checksums
+    - encoding: UTF8
+    - locale: en_US.UTF-8
+    - data-checksums
 
 postgresql:
   listen: 0.0.0.0:5432

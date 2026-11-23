@@ -1,109 +1,54 @@
 ---
-- name: Pull required container images
-  ansible.builtin.shell: |
-    set -euo pipefail
-    cd "{{ patroni_compose_dir }}"
-
-    export PATRONI_RESTAPI_PASSWORD="{{ patroni_restapi_password }}"
-    export PATRONI_SUPERUSER_PASSWORD="{{ patroni_root_password }}"
-    export PATRONI_REPLICATION_PASSWORD="{{ patroni_replication_password }}"
-    export PATRONI_REWIND_PASSWORD="{{ rewind_password }}"
-
-    export PATRONI_TEST_IMAGE="{{ patroni_image }}"
-    export PGBOUNCER_IMAGE="{{ pgbouncer_image }}"
-
-    docker compose -f docker-compose.yml pull
-  args:
-    executable: /bin/bash
+- name: Run Patroni Compose lifecycle commands
+  vars:
+    # Keep running containers untouched unless recreation is explicitly requested.
+    patroni_compose_up_args: "{{ '-d' if (patroni_compose_recreate | default(false) | bool) else '-d --no-recreate' }}"
   no_log: true
-  when: patroni_compose_pull | default(true) | bool
+  block:
+    - name: Pull required container images
+      ansible.builtin.command:
+        cmd: docker compose -f docker-compose.yml pull
+        chdir: "{{ patroni_compose_dir }}"
+      when: patroni_compose_pull | default(false) | bool
 
-- name: Stop existing Patroni Citus stack before restart
-  ansible.builtin.shell: |
-    set -euo pipefail
-    cd "{{ patroni_compose_dir }}"
+    - name: Stop existing Patroni Citus stack before restart
+      ansible.builtin.command:
+        cmd: "docker compose -f docker-compose.yml stop --timeout {{ patroni_compose_stop_timeout | default(60) }}"
+        chdir: "{{ patroni_compose_dir }}"
+      when: patroni_compose_stop_before_start | default(false) | bool
 
-    export PATRONI_RESTAPI_PASSWORD="{{ patroni_restapi_password }}"
-    export PATRONI_SUPERUSER_PASSWORD="{{ patroni_root_password }}"
-    export PATRONI_REPLICATION_PASSWORD="{{ patroni_replication_password }}"
-    export PATRONI_REWIND_PASSWORD="{{ rewind_password }}"
+    - name: Remove existing Patroni Citus containers before restart
+      ansible.builtin.command:
+        cmd: "docker compose -f docker-compose.yml down --timeout {{ patroni_compose_stop_timeout | default(60) }} --remove-orphans"
+        chdir: "{{ patroni_compose_dir }}"
+      when: patroni_compose_down_before_start | default(false) | bool
 
-    export PATRONI_TEST_IMAGE="{{ patroni_image }}"
-    export PGBOUNCER_IMAGE="{{ pgbouncer_image }}"
+    - name: Preview Patroni Compose changes
+      ansible.builtin.command:
+        cmd: "docker compose --dry-run -f docker-compose.yml up {{ patroni_compose_up_args }}"
+        chdir: "{{ patroni_compose_dir }}"
+      register: patroni_compose_plan
+      changed_when: false
 
-    docker compose -f docker-compose.yml stop --timeout {{ patroni_compose_stop_timeout | default(60) }}
-  args:
-    executable: /bin/bash
-  no_log: true
-  when: patroni_compose_stop_before_start | default(true) | bool
+    - name: Print Patroni Compose dry-run output
+      ansible.builtin.debug:
+        msg: "{{ patroni_compose_plan.stdout_lines + patroni_compose_plan.stderr_lines }}"
+      when: patroni_compose_plan is not skipped
+      no_log: false
 
-- name: Remove existing Patroni Citus containers before restart
-  ansible.builtin.shell: |
-    set -euo pipefail
-    cd "{{ patroni_compose_dir }}"
+    - name: Start Patroni Citus stack
+      ansible.builtin.command:
+        cmd: "docker compose -f docker-compose.yml up {{ patroni_compose_up_args }}"
+        chdir: "{{ patroni_compose_dir }}"
 
-    export PATRONI_RESTAPI_PASSWORD="{{ patroni_restapi_password }}"
-    export PATRONI_SUPERUSER_PASSWORD="{{ patroni_root_password }}"
-    export PATRONI_REPLICATION_PASSWORD="{{ patroni_replication_password }}"
-    export PATRONI_REWIND_PASSWORD="{{ rewind_password }}"
-
-    export PATRONI_TEST_IMAGE="{{ patroni_image }}"
-    export PGBOUNCER_IMAGE="{{ pgbouncer_image }}"
-
-    docker compose -f docker-compose.yml down --timeout {{ patroni_compose_stop_timeout | default(60) }} --remove-orphans
-  args:
-    executable: /bin/bash
-  no_log: true
-  when: patroni_compose_down_before_start | default(false) | bool
-
-- name: Start Patroni Citus stack
-  ansible.builtin.shell: |
-    set -euo pipefail
-    cd "{{ patroni_compose_dir }}"
-
-    export PATRONI_RESTAPI_USERNAME="{{ patroni_restapi_username }}"
-    export PATRONI_RESTAPI_PASSWORD="{{ patroni_restapi_password }}"
-    export PATRONI_SUPERUSER_USERNAME="{{ patroni_root_username }}"
-    export PATRONI_SUPERUSER_PASSWORD="{{ patroni_root_password }}"
-    export PATRONI_REPLICATION_USERNAME="{{ patroni_replication_username }}"
-    export PATRONI_REPLICATION_PASSWORD="{{ patroni_replication_password }}"
-    export PATRONI_REWIND_USERNAME="{{ rewind_username }}"
-    export PATRONI_REWIND_PASSWORD="{{ rewind_password }}"
-
-    export PATRONI_SCOPE="{{ patroni_scope }}"
-    export PATRONI_NAMESPACE="{{ patroni_namespace }}"
-    export ETCD_INITIAL_CLUSTER_TOKEN="{{ etcd_initial_cluster_token }}"
-
-    export PATRONI_DATA_DIR="{{ patroni_data_dir }}"
-    export ETCD_DATA_DIR="{{ etcd_data_dir }}"
-    export PATRONI_SSL_DIR="{{ patroni_ssl_dir }}"
-    export PATRONI_HAPROXY_TEMPLATE_DIR="{{ patroni_haproxy_template_dir }}"
-
-    export PATRONI_TEST_IMAGE="{{ patroni_image }}"
-    export PGBOUNCER_IMAGE="{{ pgbouncer_image }}"
-    export PGBOUNCER_DB_USER="{{ pgbouncer_db_user }}"
-
-    export HAPROXY_BIND="{{ haproxy_bind }}"
-    export HAPROXY_COORDINATOR_PORT="{{ haproxy_coordinator_port }}"
-    export HAPROXY_WORKERS_PORT="{{ haproxy_workers_port }}"
-    export HAPROXY_STATS_PORT="{{ haproxy_stats_port }}"
-    export PGBOUNCER_BIND="{{ pgbouncer_bind }}"
-    export PGBOUNCER_PORT="{{ pgbouncer_port }}"
-
-    docker compose -f docker-compose.yml up -d
-  args:
-    executable: /bin/bash
-  no_log: true
-
-- name: Show compose services
-  ansible.builtin.shell: |
-    cd "{{ patroni_compose_dir }}"
-    docker compose -f docker-compose.yml ps
-  args:
-    executable: /bin/bash
-  register: patroni_compose_ps
-  changed_when: false
+    - name: Show compose services
+      ansible.builtin.command:
+        cmd: docker compose -f docker-compose.yml ps
+        chdir: "{{ patroni_compose_dir }}"
+      register: patroni_compose_ps
+      changed_when: false
 
 - name: Print compose services
   ansible.builtin.debug:
     var: patroni_compose_ps.stdout_lines
+  when: patroni_compose_ps is not skipped

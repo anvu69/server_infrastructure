@@ -1,0 +1,14 @@
+---
+- name: Deploy pgBackRest configuration for Patroni Citus
+  become: true
+  hosts: all
+  gather_facts: false
+
+  pre_tasks:
+    - import_tasks: tasks/common/only-on-service-hosts.yml
+      vars:
+        service: patroni
+
+  tasks:
+    - name: Render pgBackRest config
+      ansible.builtin.import_tasks: tasks/patroni/generate-pgbackrest-config.yml

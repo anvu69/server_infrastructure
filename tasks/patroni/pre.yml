@@ -11,7 +11,7 @@
     - { path: "{{ patroni_compose_dir }}/config/patroni/nodes", mode: "0755" }
     - { path: "{{ patroni_compose_dir }}/runtime", mode: "0755" }
     - { path: "{{ patroni_data_dir }}", mode: "0755" }
-    - { path: "{{ etcd_data_dir }}", mode: "0755" }
+    - { path: "{{ patroni_etcd_data_dir }}", mode: "0755" }
 
 - name: Ensure PostgreSQL data directories are writable by the container postgres user
   ansible.builtin.file:
@@ -31,7 +31,7 @@
 
 - name: Ensure etcd data directories are writable by the container postgres user
   ansible.builtin.file:
-    path: "{{ etcd_data_dir }}/{{ item }}"
+    path: "{{ patroni_etcd_data_dir }}/{{ item }}"
     state: directory
     owner: "{{ patroni_container_uid }}"
     group: "{{ patroni_container_gid }}"
@@ -40,14 +40,6 @@
     - etcd1
     - etcd2
     - etcd3
-
-- name: Copy docker compose file
-  ansible.builtin.copy:
-    src: ./docker/patroni/docker-compose.yml
-    dest: "{{ patroni_compose_dir }}/docker-compose.yml"
-    owner: root
-    group: root
-    mode: "0644"
 
 - name: Copy Patroni base config
   ansible.builtin.copy:
@@ -72,3 +64,32 @@
     - work1-2
     - work2-1
     - work2-2
+
+- name: Generate Patroni SSL files
+  ansible.builtin.import_tasks: generate-ssl.yml
+
+- name: Render HAProxy confd template
+  ansible.builtin.import_tasks: generate-haproxy-config.yml
+
+- name: Render PgBouncer config
+  ansible.builtin.import_tasks: generate-pgbouncer-config.yml
+
+- name: Render pgBackRest config
+  ansible.builtin.import_tasks: generate-pgbackrest-config.yml
+
+- name: Copy docker compose file
+  ansible.builtin.copy:
+    src: ./docker/patroni/docker-compose.yml
+    dest: "{{ patroni_compose_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Render managed Compose dotenv
+  ansible.builtin.template:
+    src: templates/patroni/env.j2
+    dest: "{{ patroni_compose_dir }}/.env"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true

@@ -14,14 +14,5 @@
     - name: Prepare Patroni compose files
       ansible.builtin.import_tasks: tasks/patroni/pre.yml
 
-    - name: Generate Patroni SSL files
-      ansible.builtin.import_tasks: tasks/patroni/generate-ssl.yml
-
-    - name: Render HAProxy confd template
-      ansible.builtin.import_tasks: tasks/patroni/generate-haproxy-config.yml
-
-    - name: Render PgBouncer config
-      ansible.builtin.import_tasks: tasks/patroni/generate-pgbouncer-config.yml
-
     - name: Start Patroni compose stack
       ansible.builtin.import_tasks: tasks/patroni/start.yml

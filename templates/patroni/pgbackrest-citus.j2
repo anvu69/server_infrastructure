@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage:
+  pgbackrest-citus apply-archive-config <coord|worker1|worker2>
+  pgbackrest-citus stanza-create        <coord|worker1|worker2>
+  pgbackrest-citus check                <coord|worker1|worker2>
+  pgbackrest-citus backup               <coord|worker1|worker2> [full|diff|incr]
+  pgbackrest-citus info                 [coord|worker1|worker2]
+
+Examples:
+  pgbackrest-citus apply-archive-config coord
+  pgbackrest-citus stanza-create coord
+  pgbackrest-citus check coord
+  pgbackrest-citus backup coord full
+  pgbackrest-citus backup worker1 diff
+  pgbackrest-citus info
+USAGE
+}
+
+command="${1:-}"
+group="${2:-}"
+backup_type="${3:-full}"
+
+containers_for_group() {
+  case "$1" in
+    coord) echo "{{ patroni_pgbackrest_coord_containers | default(['citus-coord1', 'citus-coord2', 'citus-coord3']) | join(' ') }}" ;;
+    worker1) echo "{{ patroni_pgbackrest_worker1_containers | default(['citus-work1-1', 'citus-work1-2']) | join(' ') }}" ;;
+    worker2) echo "{{ patroni_pgbackrest_worker2_containers | default(['citus-work2-1', 'citus-work2-2']) | join(' ') }}" ;;
+    *) echo "Unknown group: $1" >&2; exit 1 ;;
+  esac
+}
+
+primary_container_for_group() {
+  local group_name="$1"
+  local container
+  for container in $(containers_for_group "$group_name"); do
+    if docker exec -u postgres "$container" psql -Atqc "select pg_is_in_recovery()" 2>/dev/null | grep -qx 'f'; then
+      echo "$container"
+      return 0
+    fi
+  done
+  echo "Could not find primary container for group: $group_name" >&2
+  exit 1
+}
+
+stanza_for_group() {
+  case "$1" in
+    coord) echo "{{ patroni_pgbackrest_stanza_coord | default('coord') }}" ;;
+    worker1) echo "{{ patroni_pgbackrest_stanza_worker1 | default('worker1') }}" ;;
+    worker2) echo "{{ patroni_pgbackrest_stanza_worker2 | default('worker2') }}" ;;
+    *) echo "Unknown group: $1" >&2; exit 1 ;;
+  esac
+}
+
+run_pgbackrest() {
+  local container="$1"
+  shift
+  docker exec -u postgres "$container" pgbackrest --config={{ patroni_pgbackrest_container_config | default('/etc/pgbackrest/pgbackrest.conf') | quote }} "$@"
+}
+
+case "$command" in
+  apply-archive-config)
+    [ -n "$group" ] || { usage; exit 2; }
+    echo "Warning: run apply-archive-config only after every node in this group mounts the config directory at /etc/pgbackrest." >&2
+    container="$(primary_container_for_group "$group")"
+    # Each Citus group has its own dynamic configuration in the DCS.
+    case "$group" in
+      coord) group_id=0 ;;
+      worker1) group_id=1 ;;
+      worker2) group_id=2 ;;
+    esac
+    echo "Applying Patroni dynamic archive config for group=$group container=$container"
+    docker exec -i -u postgres "$container" patronictl -c /etc/patroni edit-config --group "$group_id" --force --apply - <<'YAML'
+postgresql:
+  parameters:
+    archive_mode: "on"
+    archive_command: "/etc/pgbackrest/pgbackrest-archive-push.sh %p"
+    archive_timeout: 60s
+YAML
+    ;;
+  stanza-create|check)
+    [ -n "$group" ] || { usage; exit 2; }
+    container="$(primary_container_for_group "$group")"
+    stanza="$(stanza_for_group "$group")"
+    echo "Running $command for group=$group stanza=$stanza container=$container"
+    run_pgbackrest "$container" --stanza="$stanza" --log-level-console=info "$command"
+    ;;
+  backup)
+    [ -n "$group" ] || { usage; exit 2; }
+    container="$(primary_container_for_group "$group")"
+    stanza="$(stanza_for_group "$group")"
+    echo "Running backup type=$backup_type for group=$group stanza=$stanza container=$container"
+    run_pgbackrest "$container" --stanza="$stanza" --type="$backup_type" --log-level-console=info backup
+    ;;
+  info)
+    if [ -n "$group" ]; then
+      container="$(primary_container_for_group "$group")"
+      stanza="$(stanza_for_group "$group")"
+      run_pgbackrest "$container" --stanza="$stanza" info
+    else
+      container="$(primary_container_for_group coord)"
+      run_pgbackrest "$container" info
+    fi
+    ;;
+  -h|--help|help|'')
+    usage
+    ;;
+  *)
+    echo "Unknown command: $command" >&2
+    usage
+    exit 2
+    ;;
+esac

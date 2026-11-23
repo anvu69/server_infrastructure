@@ -1,0 +1,76 @@
+---
+- name: Set pgBackRest config directory
+  ansible.builtin.set_fact:
+    patroni_pgbackrest_config_dir_effective: "{{ patroni_pgbackrest_config_dir | default((patroni_compose_dir | default('/docker/patroni')) ~ '/runtime/pgbackrest') }}"
+
+- name: Set pgBackRest log directory
+  ansible.builtin.set_fact:
+    patroni_pgbackrest_log_dir_effective: "{{ patroni_pgbackrest_log_dir | default(patroni_pgbackrest_config_dir_effective ~ '/log') }}"
+
+- name: Ensure pgBackRest directories exist
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: root
+    group: "{{ patroni_container_gid | default(999) }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ patroni_pgbackrest_config_dir_effective }}", mode: "0750" }
+    - { path: "{{ patroni_pgbackrest_log_dir_effective }}", mode: "0770" }
+
+- name: Render pgBackRest repository config
+  ansible.builtin.template:
+    src: templates/patroni/pgbackrest.conf.j2
+    dest: "{{ patroni_pgbackrest_config_dir_effective }}/pgbackrest.conf"
+    owner: root
+    group: "{{ patroni_container_gid | default(999) }}"
+    mode: "0640"
+  no_log: true
+
+- name: Render pgBackRest config for containers using the log mount
+  vars:
+    patroni_pgbackrest_legacy_config_relative_path: "{{ patroni_pgbackrest_container_config | regex_replace('^/var/log/pgbackrest/', '') }}"
+    patroni_pgbackrest_legacy_config_path: "{{ patroni_pgbackrest_log_dir_effective }}/{{ patroni_pgbackrest_legacy_config_relative_path }}"
+  when: (patroni_pgbackrest_container_config | default('')).startswith('/var/log/pgbackrest/')
+  no_log: true
+  block:
+    - name: Ensure legacy pgBackRest config parent exists
+      ansible.builtin.file:
+        path: "{{ patroni_pgbackrest_legacy_config_path | dirname }}"
+        state: directory
+        owner: root
+        group: "{{ patroni_container_gid | default(999) }}"
+        mode: "0750"
+      # A config directly under the log mount needs its existing writable mode.
+      when: "'/' in patroni_pgbackrest_legacy_config_relative_path"
+
+    - name: Render legacy pgBackRest repository config
+      ansible.builtin.template:
+        src: templates/patroni/pgbackrest.conf.j2
+        dest: "{{ patroni_pgbackrest_legacy_config_path }}"
+        owner: root
+        group: "{{ patroni_container_gid | default(999) }}"
+        mode: "0640"
+
+- name: Render pgBackRest archive-push wrapper
+  ansible.builtin.template:
+    src: templates/patroni/pgbackrest-archive-push.sh.j2
+    dest: "{{ patroni_pgbackrest_config_dir_effective }}/pgbackrest-archive-push.sh"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Render host pgBackRest Citus command
+  ansible.builtin.template:
+    src: templates/patroni/pgbackrest-citus.j2
+    dest: "{{ patroni_pgbackrest_backup_command_path | default('/usr/local/bin/pgbackrest-citus') }}"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Show pgBackRest next steps
+  ansible.builtin.debug:
+    msg:
+      - "pgBackRest config rendered in {{ patroni_pgbackrest_config_dir_effective }}"
+      - "Run pgbackrest-citus apply-archive-config only after every node in the group mounts the config directory at /etc/pgbackrest."
+      - "See docker/patroni/README.md for the per-group archive and backup commands."

@@ -1,0 +1,35 @@
+[global]
+repo1-type={{ patroni_pgbackrest_repo_type | default('s3') }}
+repo1-path={{ patroni_pgbackrest_repo_path | default('/patroni-citus') }}
+repo1-retention-full={{ patroni_pgbackrest_retention_full | default(7) }}
+process-max={{ patroni_pgbackrest_process_max | default(4) }}
+start-fast={{ 'y' if (patroni_pgbackrest_start_fast | default(true) | bool) else 'n' }}
+compress-type={{ patroni_pgbackrest_compress_type | default('zst') }}
+# Bundle small files to reduce S3 requests and back up only changed blocks of large files.
+repo1-bundle={{ 'y' if (patroni_pgbackrest_repo_bundle | default(true) | bool) else 'n' }}
+repo1-block={{ 'y' if (patroni_pgbackrest_repo_block | default(true) | bool) else 'n' }}
+# S3-compatible providers can stall reads for longer than the 60s default.
+io-timeout={{ patroni_pgbackrest_io_timeout | default(300) }}
+log-level-console={{ patroni_pgbackrest_log_level_console | default('info') }}
+log-level-file={{ patroni_pgbackrest_log_level_file | default('detail') }}
+
+{% if (patroni_pgbackrest_repo_type | default('s3')) == 's3' %}
+repo1-s3-bucket={{ patroni_pgbackrest_repo_s3_bucket }}
+repo1-s3-endpoint={{ patroni_pgbackrest_repo_s3_endpoint }}
+repo1-s3-region={{ patroni_pgbackrest_repo_s3_region | default('us-east-1') }}
+repo1-s3-key={{ patroni_pgbackrest_repo_s3_key }}
+repo1-s3-key-secret={{ patroni_pgbackrest_repo_s3_key_secret }}
+repo1-s3-uri-style={{ patroni_pgbackrest_repo_s3_uri_style | default('path') }}
+{% if patroni_pgbackrest_repo_s3_verify_tls is defined %}
+repo1-storage-verify-tls={{ 'y' if (patroni_pgbackrest_repo_s3_verify_tls | bool) else 'n' }}
+{% endif %}
+{% endif %}
+
+[{{ patroni_pgbackrest_stanza_coord | default('coord') }}]
+pg1-path=/home/postgres/data
+
+[{{ patroni_pgbackrest_stanza_worker1 | default('worker1') }}]
+pg1-path=/home/postgres/data
+
+[{{ patroni_pgbackrest_stanza_worker2 | default('worker2') }}]
+pg1-path=/home/postgres/data

@@ -2,3 +2,11 @@
 # These placeholders illustrate shared secrets. Add only the entries your services use.
 vault_pg_pg_password: CHANGE_ME
 vault_cliproxyapi_secret_key: CHANGE_ME
+
+vault_patroni_restapi_password: CHANGE_ME
+vault_patroni_superuser_password: CHANGE_ME
+vault_patroni_replication_password: CHANGE_ME
+vault_patroni_rewind_password: CHANGE_ME
+vault_patroni_pgbackrest_repo_s3_key: CHANGE_ME
+vault_patroni_pgbackrest_repo_s3_key_secret: CHANGE_ME
+vault_patroni_haproxy_stats_password: CHANGE_ME
