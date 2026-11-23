@@ -1,7 +1,7 @@
 services:
 {% for account in cloudflare_accounts %}
   cloudflared-companion-{{ account.name }}:
-    image: ghcr.io/***REMOVED***/cloudflared-companion:latest
+    image: ghcr.io/anvu69/cloudflared-companion:latest
     container_name: cloudflared-companion-{{ account.name }}
     restart: unless-stopped
     environment:

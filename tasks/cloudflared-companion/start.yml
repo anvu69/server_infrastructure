@@ -12,7 +12,7 @@
 
 - name: Pull image cloudflared-companion
   shell: |
-    docker pull ghcr.io/***REMOVED***/cloudflared-companion:latest
+    docker pull ghcr.io/anvu69/cloudflared-companion:latest
 
 - name: Đảm bảo các network riêng biệt cho mỗi account tồn tại
   shell: docker network create "cloudflare-{{ item.name }}-net" || true
