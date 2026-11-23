@@ -5,6 +5,16 @@
     </logger>
     
     <keep_alive_timeout>10</keep_alive_timeout>
+
+    <!-- Bound memory use on the shared host. -->
+    <max_server_memory_usage>4294967296</max_server_memory_usage>
+    <mark_cache_size>536870912</mark_cache_size>
+    <uncompressed_cache_size>268435456</uncompressed_cache_size>
+    <primary_index_cache_size>268435456</primary_index_cache_size>
+    <index_mark_cache_size>134217728</index_mark_cache_size>
+    <vector_similarity_index_cache_size>67108864</vector_similarity_index_cache_size>
+    <merges_mutations_memory_usage_soft_limit>2147483648</merges_mutations_memory_usage_soft_limit>
+    <max_concurrent_queries>200</max_concurrent_queries>
     
     <!-- Stop all the unnecessary logging -->
     <query_thread_log remove="remove"/>
@@ -15,6 +25,7 @@
     <asynchronous_metric_log remove="remove"/>
     <session_log remove="remove"/>
     <part_log remove="remove"/>
+    <processors_profile_log remove="remove"/>
 
     <listen_host>0.0.0.0</listen_host>
     <interserver_listen_host>0.0.0.0</interserver_listen_host>

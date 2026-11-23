@@ -55,6 +55,8 @@ services:
   op-ch:
     image: clickhouse/clickhouse-server:25.10.2.65
     restart: always
+    mem_limit: 5g
+    memswap_limit: 5g
     volumes:
       - ./op-ch-data:/var/lib/clickhouse
       - ./clickhouse/clickhouse-config.xml:/etc/clickhouse-server/config.d/op-config.xml:ro
