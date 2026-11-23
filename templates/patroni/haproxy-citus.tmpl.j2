@@ -1,39 +1,39 @@
 global
-    maxconn {{ haproxy_global_maxconn | default(2000) }}
+    maxconn {{ patroni_haproxy_global_maxconn | default(2000) }}
 
 defaults
     log global
     mode tcp
-    retries {{ haproxy_retries | default(2) }}
-    timeout client {{ haproxy_timeout_client | default('30m') }}
-    timeout connect {{ haproxy_timeout_connect | default('4s') }}
-    timeout server {{ haproxy_timeout_server | default('30m') }}
-    timeout check {{ haproxy_timeout_check | default('5s') }}
+    retries {{ patroni_haproxy_retries | default(2) }}
+    timeout client {{ patroni_haproxy_timeout_client | default('30m') }}
+    timeout connect {{ patroni_haproxy_timeout_connect | default('4s') }}
+    timeout server {{ patroni_haproxy_timeout_server | default('30m') }}
+    timeout check {{ patroni_haproxy_timeout_check | default('5s') }}
 
 listen stats
     mode http
     bind *:7000
     stats enable
-    stats uri {{ haproxy_stats_uri | default('/') }}
-{% if haproxy_stats_username is defined and haproxy_stats_password is defined %}
-    stats auth {{ haproxy_stats_username }}:{{ haproxy_stats_password }}
+    stats uri {{ patroni_haproxy_stats_uri | default('/') }}
+{% if patroni_haproxy_stats_password is defined %}
+    stats auth {{ patroni_haproxy_stats_username | default('stats') }}:{{ patroni_haproxy_stats_password }}
 {% endif %}
-{% if haproxy_stats_realm is defined %}
-    stats realm {{ haproxy_stats_realm }}
+{% if patroni_haproxy_stats_realm is defined %}
+    stats realm {{ patroni_haproxy_stats_realm }}
 {% endif %}
 
 listen coordinator
     bind *:5000
     option httpchk HEAD /primary
     http-check expect status 200
-    default-server inter {{ haproxy_check_inter | default('3s') }} fall {{ haproxy_check_fall | default(3) }} rise {{ haproxy_check_rise | default(2) }} on-marked-down shutdown-sessions
-{% raw %}{{range gets "/0/members/*"}}    server {{base .Key}} {{$data := json .Value}}{{base (replace (index (split $data.conn_url "/") 2) "@" "/" -1)}} maxconn {% endraw %}{{ haproxy_server_maxconn | default(200) }}{% raw %} check check-ssl port {{index (split (index (split $data.api_url "/") 2) ":") 1}} verify required ca-file /etc/ssl/certs/ssl-cert-snakeoil.pem crt /etc/ssl/private/ssl-cert-snakeoil.crt
+    default-server inter {{ patroni_haproxy_check_inter | default('3s') }} fall {{ patroni_haproxy_check_fall | default(3) }} rise {{ patroni_haproxy_check_rise | default(2) }} on-marked-down shutdown-sessions
+{% raw %}{{range gets "/0/members/*"}}    server {{base .Key}} {{$data := json .Value}}{{base (replace (index (split $data.conn_url "/") 2) "@" "/" -1)}} maxconn {% endraw %}{{ patroni_haproxy_server_maxconn | default(200) }}{% raw %} check check-ssl port {{index (split (index (split $data.api_url "/") 2) ":") 1}} verify required ca-file /etc/ssl/certs/ssl-cert-snakeoil.pem crt /etc/ssl/private/ssl-cert-snakeoil.crt
 {{end}}{% endraw %}
 
 listen workers
     bind *:5001
     option httpchk HEAD /primary
     http-check expect status 200
-    default-server inter {{ haproxy_check_inter | default('3s') }} fall {{ haproxy_check_fall | default(3) }} rise {{ haproxy_check_rise | default(2) }} on-marked-down shutdown-sessions
-{% raw %}{{range gets "/*/members/*"}}{{$group := index (split .Key "/") 1}}{{if ne $group "0"}}    server {{base .Key}} {{$data := json .Value}}{{base (replace (index (split $data.conn_url "/") 2) "@" "/" -1)}} maxconn {% endraw %}{{ haproxy_server_maxconn | default(200) }}{% raw %} check check-ssl port {{index (split (index (split $data.api_url "/") 2) ":") 1}} verify required ca-file /etc/ssl/certs/ssl-cert-snakeoil.pem crt /etc/ssl/private/ssl-cert-snakeoil.crt
+    default-server inter {{ patroni_haproxy_check_inter | default('3s') }} fall {{ patroni_haproxy_check_fall | default(3) }} rise {{ patroni_haproxy_check_rise | default(2) }} on-marked-down shutdown-sessions
+{% raw %}{{range gets "/*/members/*"}}{{$group := index (split .Key "/") 1}}{{if ne $group "0"}}    server {{base .Key}} {{$data := json .Value}}{{base (replace (index (split $data.conn_url "/") 2) "@" "/" -1)}} maxconn {% endraw %}{{ patroni_haproxy_server_maxconn | default(200) }}{% raw %} check check-ssl port {{index (split (index (split $data.api_url "/") 2) ":") 1}} verify required ca-file /etc/ssl/certs/ssl-cert-snakeoil.pem crt /etc/ssl/private/ssl-cert-snakeoil.crt
 {{end}}{{end}}{% endraw %}

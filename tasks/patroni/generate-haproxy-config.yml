@@ -1,27 +1,6 @@
 ---
-# Render the HAProxy confd template consumed by docker-compose.prod.yml.
-# Output path intentionally matches compose default when running from /docker/patroni:
-#   /docker/patroni/runtime/haproxy/haproxy-citus.tmpl
-#
-# Usage from a playbook:
-#   - import_tasks: ansible/render-haproxy-template.yml
-#
-# Optional vars:
-#   patroni_compose_dir: /docker/patroni
-#   patroni_haproxy_template_dir: /docker/patroni/runtime/haproxy
-#   haproxy_stats_username: stats
-#   haproxy_stats_password: stored in Ansible Vault
-#   haproxy_stats_uri: /
-#   haproxy_stats_realm: Patroni\ Citus\ HAProxy
-#   haproxy_global_maxconn: 2000
-#   haproxy_server_maxconn: 200
-#   haproxy_check_inter: 3s
-#   haproxy_check_fall: 3
-#   haproxy_check_rise: 2
-
 - name: Set HAProxy template paths
   ansible.builtin.set_fact:
-    patroni_compose_dir_effective: "{{ patroni_compose_dir | default('/docker/patroni') }}"
     patroni_haproxy_template_dir_effective: "{{ patroni_haproxy_template_dir | default((patroni_compose_dir | default('/docker/patroni')) ~ '/runtime/haproxy') }}"
 
 - name: Ensure HAProxy template directory exists
@@ -34,12 +13,12 @@
 
 - name: Render HAProxy confd template for Citus
   ansible.builtin.template:
-    src: ./templates/patroni/haproxy-citus.tmpl.j2
+    src: templates/patroni/haproxy-citus.tmpl.j2
     dest: "{{ patroni_haproxy_template_dir_effective }}/haproxy-citus.tmpl"
     owner: root
-    group: root
-    mode: "0644"
-  no_log: "{{ haproxy_stats_password is defined }}"
+    group: "{{ patroni_container_gid | default(999) }}"
+    mode: "0640"
+  no_log: true
 
 - name: Show HAProxy template path
   ansible.builtin.debug:

@@ -11,7 +11,7 @@
     - { path: "{{ patroni_compose_dir }}/config/patroni/nodes", mode: "0755" }
     - { path: "{{ patroni_compose_dir }}/runtime", mode: "0755" }
     - { path: "{{ patroni_data_dir }}", mode: "0755" }
-    - { path: "{{ etcd_data_dir }}", mode: "0755" }
+    - { path: "{{ patroni_etcd_data_dir }}", mode: "0755" }
 
 - name: Ensure PostgreSQL data directories are writable by the container postgres user
   ansible.builtin.file:
@@ -31,7 +31,7 @@
 
 - name: Ensure etcd data directories are writable by the container postgres user
   ansible.builtin.file:
-    path: "{{ etcd_data_dir }}/{{ item }}"
+    path: "{{ patroni_etcd_data_dir }}/{{ item }}"
     state: directory
     owner: "{{ patroni_container_uid }}"
     group: "{{ patroni_container_gid }}"

@@ -5,3 +5,94 @@ log_max_file: 10
 tz: Asia/Ho_Chi_Minh
 
 # See docs/variables.md for the full list of variables each service references.
+
+# Patroni / Citus deployment
+patroni_compose_dir: /docker/patroni
+patroni_data_dir: /data/patroni-citus/postgres
+patroni_etcd_data_dir: /data/patroni-citus/etcd
+patroni_docker_network: patroni_citus
+patroni_container_uid: 999
+patroni_container_gid: 999
+patroni_image: anvu69/patroni-citus:4.1.3-pgbr
+patroni_compose_pull: true
+patroni_compose_stop_before_start: true
+patroni_compose_down_before_start: false
+patroni_compose_stop_timeout: 60
+patroni_scope: demo
+patroni_namespace: /service
+patroni_etcd_initial_cluster_token: citus-cluster
+patroni_restapi_username: admin
+patroni_restapi_password: "{{ vault_patroni_restapi_password }}"
+patroni_superuser_username: postgres
+patroni_superuser_password: "{{ vault_patroni_superuser_password }}"
+patroni_replication_username: replicator
+patroni_replication_password: "{{ vault_patroni_replication_password }}"
+patroni_rewind_username: rewind_user
+patroni_rewind_password: "{{ vault_patroni_rewind_password }}"
+patroni_ssl_force_regenerate: false
+patroni_ssl_country: VN
+patroni_ssl_state: HCM
+patroni_ssl_locality: Ho Chi Minh
+patroni_ssl_org: Patroni Citus
+patroni_ssl_days: 3650
+
+# HAProxy and PgBouncer host ports are only available on loopback by default.
+patroni_haproxy_bind: 127.0.0.1
+patroni_haproxy_coordinator_port: 15437
+patroni_haproxy_workers_port: 16491
+patroni_haproxy_stats_port: 19083
+patroni_haproxy_stats_username: stats
+patroni_haproxy_stats_password: "{{ vault_patroni_haproxy_stats_password }}"
+patroni_haproxy_stats_uri: /
+patroni_haproxy_stats_realm: Patroni\ Citus\ HAProxy
+patroni_haproxy_global_maxconn: 2000
+patroni_haproxy_server_maxconn: 200
+patroni_haproxy_check_inter: 3s
+patroni_haproxy_check_fall: 3
+patroni_haproxy_check_rise: 2
+patroni_haproxy_retries: 2
+patroni_haproxy_timeout_client: 30m
+patroni_haproxy_timeout_connect: 4s
+patroni_haproxy_timeout_server: 30m
+patroni_haproxy_timeout_check: 5s
+patroni_pgbouncer_bind: 127.0.0.1
+patroni_pgbouncer_port: 26432
+patroni_pgbouncer_image: edoburu/pgbouncer:v1.25.2-p0
+patroni_pgbouncer_container_uid: 70
+patroni_pgbouncer_container_gid: 70
+patroni_pgbouncer_auth_type: scram-sha-256
+patroni_pgbouncer_pool_mode: session
+patroni_pgbouncer_max_client_conn: 1000
+patroni_pgbouncer_default_pool_size: 80
+patroni_pgbouncer_reserve_pool_size: 20
+patroni_pgbouncer_server_host: haproxy
+patroni_pgbouncer_server_port: 5000
+patroni_pgbouncer_server_tls_sslmode: verify-ca
+patroni_pgbouncer_ignore_startup_parameters: extra_float_digits,options
+
+# pgBackRest: one stanza per Citus group; private Backblaze B2 bucket via its S3 API.
+patroni_pgbackrest_backup_command_path: /usr/local/bin/pgbackrest-citus
+patroni_pgbackrest_stanza_coord: coord
+patroni_pgbackrest_stanza_worker1: worker1
+patroni_pgbackrest_stanza_worker2: worker2
+patroni_pgbackrest_coord_containers: [citus-coord1, citus-coord2, citus-coord3]
+patroni_pgbackrest_worker1_containers: [citus-work1-1, citus-work1-2]
+patroni_pgbackrest_worker2_containers: [citus-work2-1, citus-work2-2]
+patroni_pgbackrest_repo_type: s3
+patroni_pgbackrest_repo_s3_bucket: CHANGE_ME
+patroni_pgbackrest_repo_s3_endpoint: "<bucket S3 endpoint without https://>"
+patroni_pgbackrest_repo_s3_region: "<bucket S3 region>"
+patroni_pgbackrest_repo_s3_key: "{{ vault_patroni_pgbackrest_repo_s3_key }}"
+patroni_pgbackrest_repo_s3_key_secret: "{{ vault_patroni_pgbackrest_repo_s3_key_secret }}"
+patroni_pgbackrest_repo_s3_uri_style: path
+patroni_pgbackrest_repo_s3_verify_tls: true
+patroni_pgbackrest_repo_path: /patroni-citus
+patroni_pgbackrest_repo_bundle: true
+patroni_pgbackrest_repo_block: true
+patroni_pgbackrest_io_timeout: 300
+patroni_pgbackrest_retention_full: 7
+patroni_pgbackrest_process_max: 4
+patroni_pgbackrest_compress_type: zst
+patroni_pgbackrest_start_fast: true
+patroni_pgbackrest_log_level_console: info
+patroni_pgbackrest_log_level_file: detail

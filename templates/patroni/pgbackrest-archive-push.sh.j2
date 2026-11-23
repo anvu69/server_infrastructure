@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+set -eu
+
+case "$(hostname)" in
+  coord*)
+    stanza="{{ patroni_pgbackrest_stanza_coord | default('coord') }}"
+    ;;
+  work1-*)
+    stanza="{{ patroni_pgbackrest_stanza_worker1 | default('worker1') }}"
+    ;;
+  work2-*)
+    stanza="{{ patroni_pgbackrest_stanza_worker2 | default('worker2') }}"
+    ;;
+  *)
+    echo "Cannot map hostname $(hostname) to a pgBackRest stanza" >&2
+    exit 1
+    ;;
+esac
+
+exec pgbackrest --config=/etc/pgbackrest/pgbackrest.conf --stanza="$stanza" archive-push "$1"
