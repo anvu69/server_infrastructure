@@ -6,11 +6,13 @@ services:
     restart: always
     volumes:
       - "./data/redis-master:/data"
+{% if redis_publish_ports %}
     ports:
       - "{{ master_port }}:6379"
+{% endif %}
     networks:
-      - default
-    command: redis-server --requirepass {{ redis_password }} --masterauth {{ redis_password }} --protected-mode yes --maxclients 100000
+      - redis
+    command: redis-server --requirepass {{ redis_password }} --masterauth {{ redis_password }} --protected-mode yes --maxclients 100000 --maxmemory {{ redis_maxmemory }} --maxmemory-policy {{ redis_maxmemory_policy }}
     sysctls:
       - net.core.somaxconn=1024
     # Đảm bảo container khởi động hoàn toàn trước khi các container khác phụ thuộc vào nó
@@ -28,11 +30,13 @@ services:
     restart: always
     volumes:
       - "./data/redis-replica-{{ i }}:/data"
+{% if redis_publish_ports %}
     ports:
       - 6379
+{% endif %}
     networks:
-      - default
-    command: redis-server --slaveof redis-master 6379 --requirepass {{ redis_password }} --masterauth {{ redis_password }} --protected-mode yes --maxclients 100000
+      - redis
+    command: redis-server --slaveof redis-master 6379 --requirepass {{ redis_password }} --masterauth {{ redis_password }} --protected-mode yes --maxclients 100000 --maxmemory {{ redis_maxmemory }} --maxmemory-policy {{ redis_maxmemory_policy }}
     sysctls:
       - net.core.somaxconn=1024
     depends_on:
@@ -49,10 +53,12 @@ services:
     volumes:
       - "./data/sentinel-{{ i }}:/data"
       - "./sentinel.conf:/sentinel.conf"
+{% if redis_publish_ports %}
     ports:
       - "{{ sentinel_port + i }}:26379"
+{% endif %}
     networks:
-      - default
+      - redis
     command: >
       sh -c "
         echo 'port 26379' > /etc/sentinel.conf &&
@@ -79,6 +85,6 @@ services:
 {% endfor %}
 
 networks:
-  default:
-    name: {{ network }}
+  redis:
+    name: {{ redis_network }}
     external: true

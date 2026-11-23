@@ -1,0 +1,27 @@
+# Rendered by Ansible (tasks/vaultwarden/start.yml) from inventories/prod/host_vars/srv1 (vaultwarden_*); edit the vars, not this file.
+services:
+  vaultwarden:
+    image: vaultwarden/server:{{ vaultwarden_tag }}
+    container_name: vaultwarden
+    restart: unless-stopped
+    environment:
+      - DOMAIN={{ vaultwarden_domain | replace('$', '$$') }}
+      - DATABASE_URL=postgresql://{{ vaultwarden_pg_user }}:{{ vaultwarden_pg_pass | urlencode | replace('$', '$$') }}@{{ vaultwarden_pg_host }}:{{ vaultwarden_pg_port }}/{{ vaultwarden_pg_database }}
+      - ADMIN_TOKEN={{ vaultwarden_admin_token | replace('$', '$$') }}
+      - VIRTUAL_HOST={{ vaultwarden_virtual_host }}
+      - VIRTUAL_PORT=80
+      - LETSENCRYPT_HOST={{ vaultwarden_letsencrypt_host }}
+      - LETSENCRYPT_EMAIL={{ vaultwarden_letsencrypt_email }}
+    volumes:
+      - ./vw-data:/data
+    networks:
+      - default
+      - db
+
+networks:
+  default:
+    name: {{ network }}
+    external: true
+  db:
+    name: {{ vaultwarden_db_network }}
+    external: true

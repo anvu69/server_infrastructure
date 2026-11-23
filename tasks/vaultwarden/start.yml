@@ -1,28 +1,22 @@
 ---
-- name: Copy vaultwarden folder
-  copy:
-    src: ./docker/vaultwarden
-    dest: ~/docker
-    mode: 0755
+# Re-runnable: renders compose from vars, pulls the pinned tag, and `up -d`
+# only recreates the container when the image or config changed.
+- name: Ensure vaultwarden directory exists
+  file:
+    path: ~/docker/vaultwarden
+    state: directory
+    mode: "0700"
 
-- name: Pull image vaultwarden
-  shell: |
-    docker pull vaultwarden/server:latest
+- name: Render vaultwarden docker-compose.yml
+  template:
+    src: templates/vaultwarden/docker-compose.yml.j2
+    dest: ~/docker/vaultwarden/docker-compose.yml
+    mode: "0600"
 
-- name: Shut down service
-  shell: |
-    cd ~/docker/vaultwarden
-    docker compose down
+- name: Pull image vaultwarden/server:{{ vaultwarden_tag }}
+  shell: docker pull vaultwarden/server:{{ vaultwarden_tag }}
 
 - name: Start vaultwarden
   shell: |
     cd ~/docker/vaultwarden
-    export NETWORK={{network}}
-    export VIRTUAL_HOST={{vaultwarden_virtual_host}}
-    export ADMIN_TOKEN="{{vaultwarden_admin_token}}"
-    export POSTGRESQL_HOST={{vaultwarden_pg_host}}
-    export PORTGRESQL_PORT={{vaultwarden_pg_port}}
-    export POSTGRES_DATABASE={{vaultwarden_pg_database}}
-    export POSTGRESQL_USERNAME={{vaultwarden_pg_user}}
-    export POSTGRESQL_PASSWORD={{pg_pass}}
     docker compose up -d

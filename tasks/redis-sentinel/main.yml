@@ -1,4 +1,7 @@
 ---
+- name: Ensure {{ redis_network }} network exists
+  shell: docker network inspect {{ redis_network }} >/dev/null 2>&1 || docker network create --internal {{ redis_network }}
+
 - name: Copy redis-sentinel folder
   copy:
     src: ./docker/redis-sentinel
