@@ -9,7 +9,9 @@
   shell: |
     cd ~/docker/op
     docker compose down
+  when: op_compose_down_before_start | default(false) | bool
 
+# Compose up -d leaves unchanged service containers in place.
 - name: Start services
   shell: |
     cd ~/docker/op
