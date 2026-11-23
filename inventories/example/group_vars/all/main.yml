@@ -1,0 +1,7 @@
+---
+network: nginx_proxy
+log_max_size: 10m
+log_max_file: 10
+tz: Asia/Ho_Chi_Minh
+
+# See docs/variables.md for the full list of variables each service references.

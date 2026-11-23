@@ -1,5 +1,79 @@
 # Server Infrastructure
 
+## Using this repo
+
+### Owners with private inventory access
+
+```shell
+git clone --recurse-submodules <url>
+cd <repo-directory>
+./tools/install-hooks.sh
+```
+
+The production inventory is a private Git submodule at `inventories/prod`.
+Run `git submodule update --remote inventories/prod` to pull inventory
+updates, then commit the updated submodule pointer in the parent repository.
+For your own inventory changes, work on a branch in `inventories/prod`,
+commit there first, then stage and commit `inventories/prod` in the parent.
+The hook installer sets up the secret guard for commits in both repositories.
+
+### Public clones
+
+Clone the public repository with `git clone <url>`. A recursive clone will
+fail when it reaches the private production submodule. You can continue
+from the public checkout with your own inventory.
+
+1. Install Ansible and its dependencies with
+   `ansible-galaxy install -r requirements.yml` once Ansible is available.
+2. Copy the starter inventory with
+   `cp -R inventories/example inventories/my-servers`. Replace the example
+   address and SSH key path, and list each host's services in
+   `vault_services`. Use the [playbook variable reference](docs/variables.md)
+   to fill in settings for those services. For the sample Nginx deployment,
+   set `nginx_app: nginx-proxy`, `acme: nginx-proxy-acme`,
+   `docker_gen: nginx-proxy`, and `nginx_files_path: ./data` in
+   `group_vars/all/main.yml`. The Nginx Compose project expects Docker
+   Compose and the external `nginx_proxy` network to exist on the server.
+3. Store credentials in the appropriate vault sample and refer to them
+   from `main.yml` as `"{{ vault_<name> }}"`. Remove unused placeholders
+   and use `{}` if the shared vault has no entries. Rename each
+   `vault.example.yml` to `vault.yml`. Create a local vault password file
+   and set `vault_identity_list` in your
+   local `ansible.cfg` to your identity, for example
+   `my-servers@~/.ansible/vault/my-servers.key`. Keep the password file out
+   of Git. Encrypt both files.
+
+   ```shell
+   ansible-vault encrypt --encrypt-vault-id my-servers \
+     inventories/my-servers/group_vars/all/vault.yml \
+     inventories/my-servers/host_vars/srv1/vault.yml
+   ```
+
+4. Set `inventory = ./inventories/my-servers` in your local `ansible.cfg`
+   or pass `-i inventories/my-servers` to each Ansible command. The repo's
+   `tools/where.sh` reads `inventories/prod` explicitly. For your own
+   inventory, use this command to print the declared services by host.
+
+   ```shell
+   ansible-inventory -i inventories/my-servers --list | python3 -I -c '
+   import json, sys
+   for host, settings in sorted(json.load(sys.stdin)["_meta"]["hostvars"].items()):
+       print(f"{host}:", " ".join(settings.get("vault_services", [])))
+   '
+   ```
+
+5. Run the playbook for each service you declared. Use the drift playbook
+   to compare declarations with the Compose state on your servers.
+
+   ```shell
+   ansible-playbook -i inventories/my-servers install-nginx.yml
+   ansible-playbook -i inventories/my-servers install-lazydocker.yml
+   ansible-playbook -i inventories/my-servers tools/service-drift.yml
+   ```
+
+Run `./tools/install-hooks.sh` to install the parent repository's secret
+guard in a public clone.
+
 ## Include
 - btop
 - Git
@@ -19,11 +93,10 @@
 ansible-galaxy install -r requirements.yml
 ```
 
-### Set up vault keys
+### Set up the owner's vault keys
 
-Configuration lives in `inventories/<env>/`. Non-sensitive values are committed
-in plaintext; credentials are committed encrypted with ansible-vault, one key
-per environment.
+The private production inventory tracks service settings in plaintext and
+credentials in encrypted vault files. Each environment uses its own key.
 
 Obtain the three key files from the password manager and install them:
 
@@ -37,15 +110,12 @@ chmod 600 ~/.ansible/vault/*.key
 Without the matching key, `ansible-playbook` cannot decrypt that environment.
 The keys are never committed and never leave the password manager over git.
 
-### Edit configuration
+### Edit production configuration
 
-```shell
-# shared service settings
-$EDITOR inventories/prod/group_vars/all/main.yml
-
-# shared service credentials
-ansible-vault edit inventories/prod/group_vars/all/vault.yml
-```
+In the private submodule, edit `group_vars/all/main.yml` for shared service
+settings and use `ansible-vault edit group_vars/all/vault.yml` for shared
+credentials. Use `tools/vault-skeleton.sh --help` for the command that
+prints placeholder values for the keys in an existing inventory.
 
 A secret belongs in `vault.yml` as `vault_<name>`, referenced from `main.yml`
 as `{{ vault_<name> }}`. `tools/check-secrets.sh` runs on every commit and
@@ -93,7 +163,8 @@ it should run. A service name is the playbook filename without `install-` and
 
 ### Coverage of existing services
 
-Shared service settings live in `inventories/prod/group_vars/all/main.yml`.
+In production, shared service settings live in `group_vars/all/main.yml`
+inside the private inventory submodule.
 Some services still need their settings migrated into the inventory before
 they can be installed on a host that declares them.
 

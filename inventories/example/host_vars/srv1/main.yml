@@ -1,0 +1,3 @@
+---
+ansible_host: "{{ vault_srv1_ansible_host }}"
+ansible_ssh_private_key_file: "{{ vault_srv1_ssh_key }}"

@@ -1,0 +1,4 @@
+---
+# These placeholders illustrate shared secrets. Add only the entries your services use.
+vault_pg_pg_password: CHANGE_ME
+vault_cliproxyapi_secret_key: CHANGE_ME

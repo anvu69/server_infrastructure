@@ -6,6 +6,8 @@ Ansible repo that deploys docker-compose services onto a few VPS hosts.
 
 - `install-<service>.yml` — one playbook per service, `hosts: all`.
 - `tasks/<service>/`, `templates/<service>/`, `docker/<service>/`, `roles/` — what the playbooks use.
+- `inventories/prod/` — private Git submodule. Never edit its contents from this repository.
+- `inventories/example/` — public plaintext starter inventory with the example host `srv1`.
 - `inventories/prod/hosts.yml` — hosts with neutral names (`srv1`…`srv4`).
 - `inventories/prod/group_vars/all/main.yml` — service settings shared by every host. Secrets are only referenced as `"{{ vault_... }}"`.
 - `inventories/prod/{group_vars/all,host_vars/<host>}/vault.yml` — Ansible Vault files (encrypted).

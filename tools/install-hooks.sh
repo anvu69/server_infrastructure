@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
-cat > .git/hooks/pre-commit <<'HOOK'
+hooks_dir=$(git rev-parse --git-path hooks)
+mkdir -p "$hooks_dir"
+cat > "$hooks_dir/pre-commit" <<'HOOK'
 #!/usr/bin/env bash
 # Installed by tools/install-hooks.sh - do not edit by hand, re-run that
 # script instead.
@@ -37,5 +39,49 @@ if [ "${#staged_files[@]}" -eq 0 ]; then
 fi
 exec ./tools/check-secrets.sh "${staged_files[@]}"
 HOOK
-chmod +x .git/hooks/pre-commit
+chmod +x "$hooks_dir/pre-commit"
 echo "pre-commit hook installed (scans staged files only; run ./tools/check-secrets.sh with no arguments for a full repo audit)"
+
+submodule=inventories/prod
+if [ ! -e "$submodule/.git" ]; then
+  printf 'note: %s is not checked out, skipping its pre-commit hook\n' "$submodule"
+  exit 0
+fi
+
+submodule_git_dir=$(git -C "$submodule" rev-parse --git-dir)
+case "$submodule_git_dir" in
+  /*) ;;
+  *) submodule_git_dir="$submodule/$submodule_git_dir" ;;
+esac
+mkdir -p "$submodule_git_dir/hooks"
+cat > "$submodule_git_dir/hooks/pre-commit" <<'HOOK'
+#!/usr/bin/env bash
+# Installed by the parent repository's tools/install-hooks.sh.
+set -euo pipefail
+
+parent_root=$(git rev-parse --show-superproject-working-tree)
+if [ -z "$parent_root" ]; then
+  printf 'pre-commit: could not find the parent repository\n' >&2
+  exit 1
+fi
+git_local_env_vars=$(git rev-parse --local-env-vars)
+
+git diff --cached --name-only --no-renames --diff-filter=ACM -z | (
+  staged_files=()
+  while IFS= read -r -d '' staged_file; do
+    staged_files+=("inventories/prod/$staged_file")
+  done
+  if [ "${#staged_files[@]}" -eq 0 ]; then
+    exit 0
+  fi
+  # Git exports repository-specific variables to hooks. Clear them before
+  # calling the parent guard so its Git commands use the parent repository.
+  while IFS= read -r git_var; do
+    unset "$git_var"
+  done <<< "$git_local_env_vars"
+  cd "$parent_root"
+  exec ./tools/check-secrets.sh "${staged_files[@]}"
+)
+HOOK
+chmod +x "$submodule_git_dir/hooks/pre-commit"
+printf 'pre-commit hook installed for %s\n' "$submodule"
