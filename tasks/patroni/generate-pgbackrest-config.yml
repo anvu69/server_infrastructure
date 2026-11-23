@@ -68,6 +68,36 @@
     group: root
     mode: "0755"
 
+- name: Manage scheduled pgBackRest backups
+  when: patroni_pgbackrest_timers | default(false) | bool
+  block:
+    - name: Render pgBackRest systemd units
+      ansible.builtin.template:
+        src: "templates/patroni/{{ item }}.j2"
+        dest: "/etc/systemd/system/{{ item }}"
+        owner: root
+        group: root
+        mode: "0644"
+      loop:
+        - pgbackrest-backup@.service
+        - pgbackrest-full.timer
+        - pgbackrest-diff.timer
+      register: patroni_pgbackrest_units
+
+    - name: Reload systemd after pgBackRest unit changes
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+      when: patroni_pgbackrest_units.changed
+
+    - name: Enable and start pgBackRest timers
+      ansible.builtin.systemd_service:
+        name: "{{ item }}"
+        enabled: true
+        state: started
+      loop:
+        - pgbackrest-full.timer
+        - pgbackrest-diff.timer
+
 - name: Show pgBackRest next steps
   ansible.builtin.debug:
     msg:

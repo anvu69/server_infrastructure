@@ -4,21 +4,21 @@ Deploys a single Docker host with three etcd members, a three-node Citus
 coordinator group and two two-node worker groups. Applications connect
 through PgBouncer and HAProxy to the current coordinator primary.
 
-## Deploy
+## Host mới
 
 1. Add `patroni` to the target host's `vault_services`. Use the
    [example group variables](../../inventories/example/group_vars/all/main.yml)
    and [Vault keys](../../inventories/example/group_vars/all/vault.example.yml)
    as a starting point for your private inventory. Set the actual secrets in
-   Vault. For an existing cluster, keep the current PostgreSQL and etcd bind
-   paths, Patroni scope/namespace, and credentials; rename the inventory keys
-   before redeploying.
-2. Set `patroni_pgbackrest_repo_s3_bucket`, `patroni_pgbackrest_repo_s3_endpoint`
-   (without `https://`), and `patroni_pgbackrest_repo_s3_region`. For Backblaze B2,
-   use a private bucket and a bucket-scoped application key. Use `path` URI
-   style and set the bucket lifecycle to **Keep only the last version** so
-   expired backups free space. Use a separate bucket or repository prefix for
-   a fresh cluster; do not point it at a live cluster's stanzas.
+   Vault. Keep `patroni_pgbackrest_timers: false` until the initial backups are
+   complete. Set any [small-host overrides](#small-shared-hosts) before bootstrap.
+2. Set a **unique `patroni_pgbackrest_repo_path` for each cluster**. Never
+   point two clusters at the same repository path and stanzas, even if they
+   share an S3 bucket. Set `patroni_pgbackrest_repo_s3_bucket`,
+   `patroni_pgbackrest_repo_s3_endpoint` (without `https://`), and
+   `patroni_pgbackrest_repo_s3_region`. For Backblaze B2, use a private bucket,
+   a bucket-scoped application key, `path` URI style, and the **Keep only the
+   last version** lifecycle policy so expired backups free space.
 3. Use the default image, `anvu69/patroni-citus:4.1.3-pgbr`, which includes
    PostgreSQL 17, Citus and pgBackRest. To build it yourself, run this from a
    checkout of the [anvu69/patroni `citus-prod` branch](https://github.com/anvu69/patroni/tree/citus-prod):
@@ -29,39 +29,78 @@ through PgBouncer and HAProxy to the current coordinator primary.
 
    For an image built directly on the target Docker host, set
    `patroni_compose_pull: false` and ensure the PgBouncer image is also present.
-4. Run from the root of this repository:
+   Deploy from the repository root, limiting the run to the new host:
 
    ```sh
-   ansible-playbook -i inventories/prod install-patroni.yml
+   ansible-playbook -i inventories/prod install-patroni.yml -l <host>
    ```
 
-   The full playbook already renders pgBackRest before starting Compose. To
-   render only the backup config and host command, without stopping the stack:
+4. On the Docker host, run `patronictl list` and wait for a leader in each
+   Citus group (`0`, `1`, `2`):
 
    ```sh
-   ansible-playbook -i inventories/prod install-patroni-pgbackrest.yml
+   docker exec -u postgres citus-coord1 patronictl -c /etc/patroni list
    ```
 
-5. For a fresh cluster, once all three primaries are up and every node mounts
-   the config directory at `/etc/pgbackrest`, run these on the Docker host:
+5. Render the backup config and host command without restarting Compose:
 
    ```sh
-   for group in coord worker1 worker2; do
-     pgbackrest-citus apply-archive-config "$group" || break
-     pgbackrest-citus stanza-create "$group" || break
-     pgbackrest-citus check "$group" || break
-     pgbackrest-citus backup "$group" full || break
-   done
-   pgbackrest-citus info
+   ansible-playbook -i inventories/prod install-patroni-pgbackrest.yml -l <host>
    ```
 
-   Initialize the stanzas promptly: PostgreSQL retains unarchived WAL if the
-   repository is unavailable. For an existing production stack, follow the
-   rollout below instead.
+6. On the Docker host, create the stanzas, check WAL archiving, and complete
+   the first full backup for all three groups. Initialize the stanzas promptly:
+   PostgreSQL retains unarchived WAL when the repository is unavailable.
+
+   ```sh
+   (
+     for group in coord worker1 worker2; do
+       pgbackrest-citus stanza-create "$group" || exit 1
+     done
+     for group in coord worker1 worker2; do
+       pgbackrest-citus check "$group" || exit 1
+     done
+     for group in worker1 worker2 coord; do
+       pgbackrest-citus backup "$group" full || exit 1
+     done
+   )
+   ```
+
+7. After all three full backups succeed, set `patroni_pgbackrest_timers: true`
+   **only for the new host**, then rerun
+   `install-patroni-pgbackrest.yml -l <host>` with the same inventory. Check
+   `systemctl list-timers pgbackrest-full.timer pgbackrest-diff.timer` on that
+   host. The defaults are full on Sundays and differential Monday–Saturday,
+   both at 03:00 `Asia/Ho_Chi_Minh`.
 
 By default, the runtime files are under `/docker/patroni/runtime` and
 PgBouncer is published on `127.0.0.1:26432`. Keep the PostgreSQL and etcd data
 directories on fast local storage.
+
+### Small shared hosts
+
+Set `patroni_oom_score_adj: 0` to remove the stack's OOM preference. The table
+is a starting point for a lightly loaded shared host, not a capacity guarantee.
+Size for seven PostgreSQL instances plus etcd, proxies, backups, and the other
+services on the host. `work_mem` is per query operation; keep enough connections
+for Citus workers and PgBouncer server pools.
+
+| Bootstrap variable | Small-host starting point |
+| --- | --- |
+| `patroni_pg_shared_buffers` | `128MB` |
+| `patroni_pg_effective_cache_size` | `512MB` |
+| `patroni_pg_work_mem` | `4MB` |
+| `patroni_pg_maintenance_work_mem` | `64MB` |
+| `patroni_pg_max_connections` | `120` |
+| `patroni_pg_max_prepared_transactions` | `240` |
+| `patroni_pg_max_wal_size` | `1GB` |
+| `patroni_pg_min_wal_size` | `256MB` |
+| `patroni_pg_max_worker_processes` | `12` |
+| `patroni_pg_max_parallel_workers` | `2` |
+| `patroni_pg_max_parallel_workers_per_gather` | `1` |
+| `patroni_pg_max_parallel_maintenance_workers` | `1` |
+
+These values apply when each group's DCS configuration is first bootstrapped.
 
 ## Production host đang chạy
 
@@ -72,6 +111,8 @@ containers still use the legacy pgBackRest config, set
 `patroni_pgbackrest_container_config: /var/log/pgbackrest/conf/pgbackrest.conf`
 before deploying. Ansible also renders the config under the existing log mount,
 so the current DCS archive command and nightly backup keep using the same path.
+Leave `patroni_pgbackrest_timers` unset or `false` to leave existing systemd
+units and timers unmanaged.
 
 On the first `install-patroni.yml` run, leave `patroni_compose_recreate`,
 `patroni_compose_pull`, `patroni_compose_stop_before_start`, and

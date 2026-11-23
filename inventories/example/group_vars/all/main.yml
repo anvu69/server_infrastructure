@@ -14,6 +14,8 @@ patroni_docker_network: patroni_citus
 patroni_container_uid: 999
 patroni_container_gid: 999
 patroni_image: anvu69/patroni-citus:4.1.3-pgbr
+# Use 0 on shared hosts to remove this stack's OOM preference.
+patroni_oom_score_adj: -800
 # Keep running containers and local image tags unchanged on deployment.
 patroni_compose_recreate: false
 patroni_compose_pull: false
@@ -39,6 +41,20 @@ patroni_ssl_state: HCM
 patroni_ssl_locality: Ho Chi Minh
 patroni_ssl_org: Patroni Citus
 patroni_ssl_days: 3650
+
+# PostgreSQL settings applied only when bootstrapping new Patroni groups.
+patroni_pg_shared_buffers: 4GB
+patroni_pg_effective_cache_size: 12GB
+patroni_pg_work_mem: 64MB
+patroni_pg_maintenance_work_mem: 1GB
+patroni_pg_max_connections: 500
+patroni_pg_max_prepared_transactions: 4000
+patroni_pg_max_wal_size: 16GB
+patroni_pg_min_wal_size: 2GB
+patroni_pg_max_worker_processes: 24
+patroni_pg_max_parallel_workers: 12
+patroni_pg_max_parallel_workers_per_gather: 4
+patroni_pg_max_parallel_maintenance_workers: 4
 
 # HAProxy and PgBouncer host ports are only available on loopback by default.
 patroni_haproxy_bind: 127.0.0.1
@@ -76,6 +92,10 @@ patroni_pgbouncer_ignore_startup_parameters: extra_float_digits,options
 
 # pgBackRest: one stanza per Citus group; private Backblaze B2 bucket via its S3 API.
 patroni_pgbackrest_backup_command_path: /usr/local/bin/pgbackrest-citus
+# Opt in only after the first full backup of every group.
+patroni_pgbackrest_timers: false
+patroni_pgbackrest_full_schedule: "Sun *-*-* 03:00:00 Asia/Ho_Chi_Minh"
+patroni_pgbackrest_diff_schedule: "Mon..Sat *-*-* 03:00:00 Asia/Ho_Chi_Minh"
 # Keep the legacy path until all PostgreSQL containers mount the config directory.
 # patroni_pgbackrest_container_config: /var/log/pgbackrest/conf/pgbackrest.conf
 patroni_pgbackrest_stanza_coord: coord

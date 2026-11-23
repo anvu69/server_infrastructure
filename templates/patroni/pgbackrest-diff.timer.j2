@@ -1,0 +1,7 @@
+[Timer]
+OnCalendar={{ patroni_pgbackrest_diff_schedule | default('Mon..Sat *-*-* 03:00:00 Asia/Ho_Chi_Minh') }}
+Persistent=true
+Unit=pgbackrest-backup@diff.service
+
+[Install]
+WantedBy=timers.target
