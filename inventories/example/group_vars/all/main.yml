@@ -11,6 +11,7 @@ patroni_compose_dir: /docker/patroni
 patroni_data_dir: /data/patroni-citus/postgres
 patroni_etcd_data_dir: /data/patroni-citus/etcd
 patroni_docker_network: patroni_citus
+patroni_tunnel_network: patroni_tunnel
 patroni_container_uid: 999
 patroni_container_gid: 999
 patroni_image: anvu69/patroni-citus:4.1.3-pgbr
@@ -88,6 +89,8 @@ patroni_pgbouncer_reserve_pool_size: 20
 patroni_pgbouncer_server_host: haproxy
 patroni_pgbouncer_server_port: 5000
 patroni_pgbouncer_server_tls_sslmode: verify-ca
+# Opt in with allow to accept TLS on request without rejecting internal plaintext clients.
+patroni_pgbouncer_client_tls_sslmode: ""
 patroni_pgbouncer_ignore_startup_parameters: extra_float_digits,options
 
 # pgBackRest: one stanza per Citus group; private Backblaze B2 bucket via its S3 API.
@@ -122,3 +125,8 @@ patroni_pgbackrest_compress_type: zst
 patroni_pgbackrest_start_fast: true
 patroni_pgbackrest_log_level_console: info
 patroni_pgbackrest_log_level_file: detail
+
+# Cloudflare Workers VPC connector; enable cloudflared-tunnel in the host's vault_services.
+cloudflared_tunnel_token: "{{ vault_cloudflared_tunnel_token }}"
+cloudflared_tunnel_image: cloudflare/cloudflared:2026.11.2
+cloudflared_tunnel_network: patroni_tunnel

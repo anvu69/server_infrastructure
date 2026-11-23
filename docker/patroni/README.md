@@ -158,6 +158,43 @@ done
 
 Remove `<log dir>/conf` only after all three checks succeed.
 
+## Hyperdrive qua Workers VPC
+
+1. In Cloudflare, create a remotely managed Cloudflare Tunnel. Store its token
+   as `vault_cloudflared_tunnel_token` in the target host's encrypted inventory.
+   Allow outbound UDP port 7844 for QUIC. No public hostname or published
+   database port is needed.
+2. On the target host, set `patroni_pgbouncer_client_tls_sslmode: allow` and run
+   `ansible-playbook install-patroni.yml -l <host>` with the deployment inventory.
+   Client TLS remains off when the variable is absent or empty. `allow` still
+   accepts plaintext from internal clients.
+3. From the deployed Patroni Compose directory (default `/docker/patroni`), run
+   `docker compose up -d --no-deps pgbouncer`. The playbook uses `--no-recreate`
+   by default; this targeted command applies the new mount and network to
+   PgBouncer without recreating its dependencies. Expect a brief disconnect.
+4. Add `cloudflared-tunnel` to the target host's `vault_services` and run
+   `ansible-playbook install-cloudflared-tunnel.yml -l <host>`. If you override
+   `patroni_tunnel_network`, set `cloudflared_tunnel_network` to the same name.
+   PgBouncer is the only Patroni service on this bridge; the connector does not
+   join the existing `citus` bridge.
+
+Upload `ca.crt` from the Patroni SSL directory, not the server certificate or
+private key. The server certificate must include `DNS:pgbouncer` so Workers VPC
+can verify the hostname. Use the returned CA ID in the VPC service command,
+then the returned VPC service ID in the Hyperdrive command:
+
+```sh
+npx wrangler cert upload certificate-authority --ca-cert ca.crt --name "$CA_NAME"
+npx wrangler vpc service create "$VPC_SERVICE_NAME" --type tcp --tcp-port 5432 \
+  --app-protocol postgresql --tunnel-id "$TUNNEL_ID" --hostname pgbouncer \
+  --certificate-authority "$CA_ID" --cert-verification-mode verify_full
+npx wrangler hyperdrive create "$HYPERDRIVE_NAME" --service-id "$SERVICE_ID" \
+  --database "$DB_NAME" --user "$DB_USER" --password "$DB_PASSWORD" --scheme postgresql
+```
+
+Add the new Hyperdrive ID to your Worker's Hyperdrive binding. See the
+[connector README](../cloudflared-tunnel/README.md) for deployment variables.
+
 ## Operational notes
 
 - Mount the entire pgBackRest config directory read-only at `/etc/pgbackrest`,
