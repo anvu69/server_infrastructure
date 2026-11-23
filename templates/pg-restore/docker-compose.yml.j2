@@ -6,7 +6,7 @@
 
 services:
   restore-tool:
-    image: ${RESTORE_TOOL_IMAGE:-***REMOVED***/pg-restore:dev}
+    image: ${RESTORE_TOOL_IMAGE:-anvu69/pg-restore:dev}
     container_name: postgres-restore-tool
     profiles: [tools]
     networks:

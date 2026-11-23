@@ -20,10 +20,10 @@ services:
     container_name: mysql-master
     restart: always
     environment:
-      - MYSQL_ROOT_PASSWORD=***REMOVED***
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
       - MYSQL_DATABASE=${MYSQL_DATABASE:-mydb}
       - MYSQL_USER=${MYSQL_USER:-user}
-      - MYSQL_PASSWORD=***REMOVED***
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-password}
     volumes:
       - ./master/data:/var/lib/mysql
       - ./master/logs:/var/log/mysql
@@ -44,10 +44,10 @@ services:
     <<: *mysql-slave
     container_name: mysql-slave{{ i }}
     environment:
-      - MYSQL_ROOT_PASSWORD=***REMOVED***
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
       - MYSQL_DATABASE=${MYSQL_DATABASE:-mydb}
       - MYSQL_USER=${MYSQL_USER:-user}
-      - MYSQL_PASSWORD=***REMOVED***
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-password}
     volumes:
       - ./slave{{ i }}/data:/var/lib/mysql
       - ./slave{{ i }}/logs:/var/log/mysql
@@ -92,7 +92,7 @@ services:
       - ORCHESTRATOR_DB_HOST=mysql-master
       - ORCHESTRATOR_DB_PORT=3306
       - ORCHESTRATOR_DB_USER=orchestrator
-      - ORCHESTRATOR_DB_PASSWORD=***REMOVED***
+      - ORCHESTRATOR_DB_PASSWORD=${ORCHESTRATOR_DB_PASSWORD:-orchestrator}
     volumes:
       - type: bind
         source: ./orchestrator/config

@@ -126,7 +126,7 @@ x-env-etcd: &env-etdc-share
 
 services:
   etcd1: &etcd
-    image: ***REMOVED***/patroni-citus:3.2.2-no-ssl2
+    image: anvu69/patroni-citus:3.2.2-no-ssl2
     environment:
       <<: *env-etdc-share
       # PATRONI_POSTGRESQL_DATA_DIR: data/etdc1
@@ -168,7 +168,7 @@ services:
     #   - ./etcd3_data:/home/postgres/etcd3.etcd
 
   haproxy:
-    image: ***REMOVED***/patroni-citus:3.2.2-no-ssl2
+    image: anvu69/patroni-citus:3.2.2-no-ssl2
     container_name: patroni-citus-haproxy
     ulimits:
       nofile:
@@ -215,7 +215,7 @@ services:
 
   # Coordinator
   coord1: &coord-share
-    image: ***REMOVED***/patroni-citus:3.2.2-no-ssl2
+    image: anvu69/patroni-citus:3.2.2-no-ssl2
     container_name: coord1
     shm_size: 256mb
     environment: &coord_env
@@ -266,7 +266,7 @@ services:
 
   # Patroni + PostgreSQL + Citus worker nodes (two worker clusters with two nodes each)
   work1-1: &work-share
-    image: ***REMOVED***/patroni-citus:3.2.2-no-ssl2
+    image: anvu69/patroni-citus:3.2.2-no-ssl2
     container_name: work1-1
     shm_size: 256mb
     environment: &work1_env
