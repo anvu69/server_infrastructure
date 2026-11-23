@@ -3,6 +3,11 @@
 
   hosts: all
 
+  pre_tasks:
+    - import_tasks: tasks/common/only-on-service-hosts.yml
+      vars:
+        service: mysql5_7
+
   tasks:
     - import_tasks: tasks/mysql5_7/start.yml
     - import_tasks: tasks/common/prune.yml

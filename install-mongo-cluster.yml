@@ -3,6 +3,11 @@
 
   hosts: all
 
+  pre_tasks:
+    - import_tasks: tasks/common/only-on-service-hosts.yml
+      vars:
+        service: mongo-cluster
+
   tasks:
     - import_tasks: tasks/mongo-cluster/start.yml
     - import_tasks: tasks/common/prune.yml

@@ -5,6 +5,11 @@
 
   become: true
 
+  pre_tasks:
+    - import_tasks: tasks/common/only-on-service-hosts.yml
+      vars:
+        service: open-notebook
+
   tasks:
     - import_tasks: tasks/open-notebook/start.yml
     - import_tasks: tasks/common/prune.yml

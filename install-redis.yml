@@ -1,6 +1,10 @@
 ---
 - name: Deploy Redis service
   hosts: all
+  pre_tasks:
+    - import_tasks: tasks/common/only-on-service-hosts.yml
+      vars:
+        service: redis
   roles:
     - redis
   tasks:

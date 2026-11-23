@@ -5,5 +5,10 @@
 
   become: true
 
+  pre_tasks:
+    - import_tasks: tasks/common/only-on-service-hosts.yml
+      vars:
+        service: btop
+
   tasks:
     - import_tasks: tasks/install-btop.yml

@@ -3,5 +3,10 @@
 
   hosts: all
 
+  pre_tasks:
+    - import_tasks: tasks/common/only-on-service-hosts.yml
+      vars:
+        service: rabbitmq-cluster
+
   tasks:
     - import_tasks: tasks/rabbitmq-cluster/start.yml

@@ -3,6 +3,11 @@
 
   hosts: all
 
+  pre_tasks:
+    - import_tasks: tasks/common/only-on-service-hosts.yml
+      vars:
+        service: cloudflared-companion
+
   tasks:
     - import_tasks: tasks/cloudflared-companion/start.yml
     - import_tasks: tasks/common/prune.yml

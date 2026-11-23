@@ -5,6 +5,11 @@
 
   become: true
 
+  pre_tasks:
+    - import_tasks: tasks/common/only-on-service-hosts.yml
+      vars:
+        service: xpipe
+
   tasks:
     - import_tasks: tasks/xpipe/start.yml
     - import_tasks: tasks/common/prune.yml

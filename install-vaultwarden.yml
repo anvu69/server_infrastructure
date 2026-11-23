@@ -3,6 +3,11 @@
 
   hosts: all
 
+  pre_tasks:
+    - import_tasks: tasks/common/only-on-service-hosts.yml
+      vars:
+        service: vaultwarden
+
   tasks:
     - import_tasks: tasks/vaultwarden/start.yml
     - import_tasks: tasks/common/prune.yml

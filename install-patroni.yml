@@ -5,6 +5,11 @@
 
   hosts: all
 
+  pre_tasks:
+    - import_tasks: tasks/common/only-on-service-hosts.yml
+      vars:
+        service: patroni
+
   tasks:
     - name: Prepare Patroni compose files
       ansible.builtin.import_tasks: tasks/patroni/pre.yml

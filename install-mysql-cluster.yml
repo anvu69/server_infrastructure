@@ -2,6 +2,10 @@
 - name: Deploy MySQL Cluster with High Availability
   hosts: all
   become: yes
+  pre_tasks:
+    - import_tasks: tasks/common/only-on-service-hosts.yml
+      vars:
+        service: mysql-cluster
   tasks:
     - name: Include MySQL cluster tasks
       include_tasks: tasks/mysql-cluster/start.yml

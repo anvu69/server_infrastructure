@@ -5,5 +5,10 @@
 
   gather_facts: yes
 
+  pre_tasks:
+    - import_tasks: tasks/common/only-on-service-hosts.yml
+      vars:
+        service: nginx
+
   tasks:
     - import_tasks: tasks/install-nginx.yml

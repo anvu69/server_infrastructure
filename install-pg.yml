@@ -1,6 +1,10 @@
 ---
 - name: Deploy Postgres service
   hosts: all
+  pre_tasks:
+    - import_tasks: tasks/common/only-on-service-hosts.yml
+      vars:
+        service: pg
   roles:
     - pg
   tasks:

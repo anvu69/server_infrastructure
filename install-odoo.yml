@@ -3,6 +3,11 @@
 
   hosts: all
 
+  pre_tasks:
+    - import_tasks: tasks/common/only-on-service-hosts.yml
+      vars:
+        service: odoo
+
   tasks:
     - import_tasks: tasks/odoo/start.yml
     - import_tasks: tasks/common/prune.yml

@@ -5,6 +5,11 @@
 
   become: yes
 
+  pre_tasks:
+    - import_tasks: tasks/common/only-on-service-hosts.yml
+      vars:
+        service: redis-sentinel
+
   tasks:
     - import_tasks: tasks/redis-sentinel/main.yml
     - import_tasks: tasks/common/prune.yml

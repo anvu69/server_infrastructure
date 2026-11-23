@@ -1,0 +1,58 @@
+---
+- name: Report Compose service drift
+  hosts: all
+  gather_facts: false
+  vars:
+    service_projects:
+      mysql5_7: [mysql5_7, mysql]
+    managed_services: >-
+      {{ lookup('fileglob', playbook_dir ~ '/../install-*.yml', wantlist=True)
+         | map('basename') | map('regex_replace', '^install-', '')
+         | map('regex_replace', '[.]yml$', '') | list }}
+    declared_services: "{{ vault_services | default([]) }}"
+
+  tasks:
+    - name: Read Compose project names and container states
+      ansible.builtin.command:
+        argv:
+          - docker
+          - ps
+          - -a
+          - --format
+          - '{% raw %}{{.Label "com.docker.compose.project"}}|{{.State}}{% endraw %}'
+      register: compose_containers
+      changed_when: false
+      check_mode: false
+
+    - name: Report service drift for this host
+      vars:
+        present_projects: >-
+          {{ compose_containers.stdout_lines | select('match', '^[^|]+[|]')
+             | map('split', '|') | map('first') | unique | list }}
+        running_projects: >-
+          {{ compose_containers.stdout_lines | select('match', '^[^|]+[|]running$')
+             | map('split', '|') | map('first') | unique | list }}
+        service_status: >-
+          {%- set status = namespace(present=[], running=[], managed_projects=[]) -%}
+          {%- for name in (managed_services + declared_services) | unique -%}
+            {%- set projects = service_projects.get(name, [name]) -%}
+            {%- if projects | intersect(present_projects) -%}
+              {%- set status.present = status.present + [name] -%}
+            {%- endif -%}
+            {%- if projects | intersect(running_projects) -%}
+              {%- set status.running = status.running + [name] -%}
+            {%- endif -%}
+            {%- if name in managed_services -%}
+              {%- set status.managed_projects = status.managed_projects + projects -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {{ {'present': status.present, 'running': status.running,
+              'managed_projects': status.managed_projects} }}
+      ansible.builtin.debug:
+        msg:
+          declared_not_running: "{{ declared_services | difference(service_status.running) | sort }}"
+          declared_but_stopped: >-
+            {{ declared_services | intersect(service_status.present) | difference(service_status.running) | sort }}
+          running_not_declared: >-
+            {{ managed_services | intersect(service_status.running) | difference(declared_services) | sort }}
+          unmanaged: "{{ running_projects | difference(service_status.managed_projects) | sort }}"

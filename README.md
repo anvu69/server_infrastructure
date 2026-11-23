@@ -40,11 +40,11 @@ The keys are never committed and never leave the password manager over git.
 ### Edit configuration
 
 ```shell
-# non-sensitive values
-$EDITOR inventories/prod/host_vars/srv1/main.yml
+# shared service settings
+$EDITOR inventories/prod/group_vars/all/main.yml
 
-# credentials
-ansible-vault edit inventories/prod/host_vars/srv1/vault.yml
+# shared service credentials
+ansible-vault edit inventories/prod/group_vars/all/vault.yml
 ```
 
 A secret belongs in `vault.yml` as `vault_<name>`, referenced from `main.yml`
@@ -74,20 +74,28 @@ keys; a contributor who does not gets only checks 1 and 3.
 ### Run a playbook
 
 ```shell
-ansible-playbook -i inventories/prod install-pg.yml --limit srv1
+ansible-playbook -i inventories/prod install-pg.yml
 ```
 
 Add `--check --diff` to preview without changing anything.
 
+### Which host runs what
+
+Each host's encrypted inventory defines `vault_services`, the list of services
+it should run. A service name is the playbook filename without `install-` and
+`.yml`. Install playbooks select hosts using this list, so they no longer need
+`--limit`.
+
+- `tools/where.sh` lists the declared services on every host.
+- `tools/where.sh pg` lists the hosts that declare `pg`.
+- `ansible-playbook -i inventories/prod tools/service-drift.yml` compares the
+  declarations with Compose container states on each host.
+
 ### Coverage of existing services
 
-Only 25 of the roughly 40 services have configuration in
-`inventories/prod/host_vars/srv1/` so far. The rest were never migrated onto
-this host's inventory: running one of their playbooks now fails on an
-undefined variable, where previously it would have failed on a missing
-`vars/` file under the old layout. That is expected, not a sign the migration
-is broken — it just means that service's variables have not been added to
-`host_vars/srv1/` yet.
+Shared service settings live in `inventories/prod/group_vars/all/main.yml`.
+Some services still need their settings migrated into the inventory before
+they can be installed on a host that declares them.
 
 `roles/pg/` and `roles/redis/` are worked examples for converting the
 remaining services: `pg` shows a templated service (config files rendered

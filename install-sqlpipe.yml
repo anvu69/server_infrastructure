@@ -1,9 +1,14 @@
 ---
 - name: Install sqlpipe
 
-  hosts: lol
+  hosts: all
 
   become: true
+
+  pre_tasks:
+    - import_tasks: tasks/common/only-on-service-hosts.yml
+      vars:
+        service: sqlpipe
 
   tasks:
     - import_tasks: tasks/install-sqlpipe.yml

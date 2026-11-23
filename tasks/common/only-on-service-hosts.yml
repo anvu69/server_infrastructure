@@ -1,0 +1,5 @@
+---
+# Ends the play for any host whose vault_services does not list `service`.
+- name: Skip hosts that do not run this service
+  meta: end_host
+  when: service not in (vault_services | default([]))
