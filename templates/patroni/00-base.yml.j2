@@ -38,7 +38,7 @@ bootstrap:
         - hostssl all all all scram-sha-256
       parameters:
         shared_preload_libraries: "citus,pg_stat_statements"
-        max_prepared_transactions: 4000
+        max_prepared_transactions: {{ patroni_pg_max_prepared_transactions | default(4000) }}
         citus.max_intermediate_result_size: "1GB"
         citus.max_cached_conns_per_worker: 10
         password_encryption: scram-sha-256
@@ -47,20 +47,20 @@ bootstrap:
         ssl_key_file: /etc/postgresql/certs/server.key
         ssl_ca_file: /etc/postgresql/certs/ca.crt
         citus.node_conninfo: "sslrootcert=/etc/postgresql/certs/ca.crt sslkey=/etc/postgresql/certs/server.key sslcert=/etc/postgresql/certs/server.crt sslmode=verify-ca"
-        max_connections: 500
+        max_connections: {{ patroni_pg_max_connections | default(500) }}
         superuser_reserved_connections: 10
         max_wal_senders: 20
         max_replication_slots: 20
-        max_worker_processes: 24
-        max_parallel_workers: 12
-        max_parallel_workers_per_gather: 4
-        max_parallel_maintenance_workers: 4
+        max_worker_processes: {{ patroni_pg_max_worker_processes | default(24) }}
+        max_parallel_workers: {{ patroni_pg_max_parallel_workers | default(12) }}
+        max_parallel_workers_per_gather: {{ patroni_pg_max_parallel_workers_per_gather | default(4) }}
+        max_parallel_maintenance_workers: {{ patroni_pg_max_parallel_maintenance_workers | default(4) }}
         wal_level: logical
         archive_mode: "on"
         archive_command: "/etc/pgbackrest/pgbackrest-archive-push.sh %p"
         archive_timeout: 60s
-        max_wal_size: 16GB
-        min_wal_size: 2GB
+        max_wal_size: {{ patroni_pg_max_wal_size | default('16GB') }}
+        min_wal_size: {{ patroni_pg_min_wal_size | default('2GB') }}
         checkpoint_completion_target: 0.9
         checkpoint_timeout: 15min
         wal_compression: "on"
@@ -88,10 +88,10 @@ bootstrap:
         track_activities: "on"
         track_counts: "on"
         track_io_timing: "on"
-        shared_buffers: 4GB
-        effective_cache_size: 12GB
-        work_mem: 64MB
-        maintenance_work_mem: 1GB
+        shared_buffers: {{ patroni_pg_shared_buffers | default('4GB') }}
+        effective_cache_size: {{ patroni_pg_effective_cache_size | default('12GB') }}
+        work_mem: {{ patroni_pg_work_mem | default('64MB') }}
+        maintenance_work_mem: {{ patroni_pg_maintenance_work_mem | default('1GB') }}
         synchronous_commit: "off"
         lc_messages: en_US.UTF-8
         lc_monetary: en_US.UTF-8

@@ -41,9 +41,9 @@
     - etcd2
     - etcd3
 
-- name: Copy Patroni base config
-  ansible.builtin.copy:
-    src: ./docker/patroni/config/patroni/00-base.yml
+- name: Render Patroni base config
+  ansible.builtin.template:
+    src: templates/patroni/00-base.yml.j2
     dest: "{{ patroni_compose_dir }}/config/patroni/00-base.yml"
     owner: root
     group: root

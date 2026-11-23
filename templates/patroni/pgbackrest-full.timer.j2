@@ -1,0 +1,7 @@
+[Timer]
+OnCalendar={{ patroni_pgbackrest_full_schedule | default('Sun *-*-* 03:00:00 Asia/Ho_Chi_Minh') }}
+Persistent=true
+Unit=pgbackrest-backup@full.service
+
+[Install]
+WantedBy=timers.target
