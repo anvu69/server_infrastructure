@@ -1,0 +1,3 @@
+[submodule "inventories/prod"]
+	path = inventories/prod
+	url = git@github.com:anvu69/server_inventory.git
