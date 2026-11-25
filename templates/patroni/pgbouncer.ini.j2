@@ -22,3 +22,9 @@ client_tls_ca_file = /etc/postgresql/certs/ca.crt
 {% endif -%}
 admin_users = {{ patroni_pgbouncer_admin_users | default(patroni_pgbouncer_db_user | default(patroni_superuser_username | default('postgres'))) }}
 stats_users = {{ patroni_pgbouncer_stats_users | default(patroni_pgbouncer_db_user | default(patroni_superuser_username | default('postgres'))) }}
+{%- if patroni_pgbouncer_users | default({}) %}{{ '\n\n' -}}
+[users]
+{% for user, options in patroni_pgbouncer_users | dictsort -%}
+{{ user }} = {% for key, value in options | dictsort %}{{ key }}={{ value }}{{ ' ' if not loop.last else '' }}{% endfor %}{{ '\n' -}}
+{% endfor -%}
+{% endif -%}

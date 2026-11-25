@@ -195,6 +195,16 @@ npx wrangler hyperdrive create "$HYPERDRIVE_NAME" --service-id "$SERVICE_ID" \
 Add the new Hyperdrive ID to your Worker's Hyperdrive binding. See the
 [connector README](../cloudflared-tunnel/README.md) for deployment variables.
 
+## PgBouncer
+
+To add an application user, create the role on the coordinator, append its
+SCRAM verifier entry to the host's `userlist.txt` in place (preserving the inode
+of this single-file bind mount), then run `docker kill -s HUP citus-pgbouncer`.
+When `pgbouncer.ini` changes, including via `patroni_pgbouncer_users`, Ansible
+replaces the inode of that single-file bind mount, so HUP still sees the old
+file. Run `docker restart citus-pgbouncer` to pick up the new file; expect client
+connections to drop for a few seconds.
+
 ## Operational notes
 
 - Mount the entire pgBackRest config directory read-only at `/etc/pgbackrest`,

@@ -86,6 +86,9 @@ patroni_pgbouncer_pool_mode: session
 patroni_pgbouncer_max_client_conn: 1000
 patroni_pgbouncer_default_pool_size: 80
 patroni_pgbouncer_reserve_pool_size: 20
+# Pools are per (database, user); keep the sum of pool sizes and reserves below max_connections - superuser_reserved_connections.
+# patroni_pgbouncer_users: {app_a: {pool_size: 60}}
+patroni_pgbouncer_users: {}
 patroni_pgbouncer_server_host: haproxy
 patroni_pgbouncer_server_port: 5000
 patroni_pgbouncer_server_tls_sslmode: verify-ca
