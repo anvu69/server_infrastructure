@@ -17,6 +17,9 @@ patroni_container_gid: 999
 patroni_image: anvu69/patroni-citus:4.1.3-pgbr
 # Use 0 on shared hosts to remove this stack's OOM preference.
 patroni_oom_score_adj: -800
+# PostgreSQL container /dev/shm limits for dynamic shared memory.
+patroni_coord_shm_size: 1g
+patroni_worker_shm_size: 256m
 # Keep running containers and local image tags unchanged on deployment.
 patroni_compose_recreate: false
 patroni_compose_pull: false

@@ -207,6 +207,7 @@ connections to drop for a few seconds.
 
 ## Operational notes
 
+- Set `patroni_coord_shm_size` (default `1g`) or `patroni_worker_shm_size` (default `256m`) to tune PostgreSQL `/dev/shm`; apply changes by recreating one node at a time: replicas first, then switch over and recreate the former primary.
 - Mount the entire pgBackRest config directory read-only at `/etc/pgbackrest`,
   not the individual files. Ansible replaces files atomically; a file bind
   mount can stay pinned to the old inode. PostgreSQL runs
