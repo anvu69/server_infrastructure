@@ -98,6 +98,11 @@ patroni_pgbouncer_server_tls_sslmode: verify-ca
 # Opt in with allow to accept TLS on request without rejecting internal plaintext clients.
 patroni_pgbouncer_client_tls_sslmode: ""
 patroni_pgbouncer_ignore_startup_parameters: extra_float_digits,options
+# Optional PgBouncer logging overrides; omit to keep PgBouncer defaults.
+# patroni_pgbouncer_log_connections: false
+# patroni_pgbouncer_log_disconnections: false
+# patroni_pgbouncer_log_pooler_errors: true
+# patroni_pgbouncer_stats_period: 60
 
 # pgBackRest: one stanza per Citus group; private Backblaze B2 bucket via its S3 API.
 patroni_pgbackrest_backup_command_path: /usr/local/bin/pgbackrest-citus
@@ -136,3 +141,7 @@ patroni_pgbackrest_log_level_file: detail
 cloudflared_tunnel_token: "{{ vault_cloudflared_tunnel_token }}"
 cloudflared_tunnel_image: cloudflare/cloudflared:2026.11.2
 cloudflared_tunnel_network: patroni_tunnel
+
+# Better Stack host and Docker telemetry; enable betterstack-collector in the host's vault_services.
+betterstack_collector_secret: "{{ vault_betterstack_collector_secret }}"
+betterstack_collector_tag: "1.2.5"

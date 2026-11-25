@@ -124,6 +124,8 @@ run manual Compose commands from the deployment directory (default
 `/docker/patroni`) as root so Compose can read the managed `.env`. Do not
 source it or override its values with exported variables.
 
+Docker log rotation (`patroni_log_max_size`, default `50m`; `patroni_log_max_file`, default `5`) takes effect when each container is recreated.
+
 Apply new image or mount settings only when needed, one service at a time:
 
 ```sh

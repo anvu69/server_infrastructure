@@ -1,0 +1,13 @@
+---
+- name: Deploy Better Stack collector
+  hosts: all
+  become: true
+  gather_facts: false
+
+  pre_tasks:
+    - import_tasks: tasks/common/only-on-service-hosts.yml
+      vars:
+        service: betterstack-collector
+
+  tasks:
+    - import_tasks: tasks/betterstack-collector/start.yml
