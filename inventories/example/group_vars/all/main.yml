@@ -110,6 +110,8 @@ patroni_pgbackrest_backup_command_path: /usr/local/bin/pgbackrest-citus
 patroni_pgbackrest_timers: false
 patroni_pgbackrest_full_schedule: "Sun *-*-* 03:00:00 Asia/Ho_Chi_Minh"
 patroni_pgbackrest_diff_schedule: "Mon..Sat *-*-* 03:00:00 Asia/Ho_Chi_Minh"
+# Optional Better Stack heartbeat URL; use "{{ vault_patroni_pgbackrest_heartbeat_url }}" to enable.
+patroni_pgbackrest_heartbeat_url: ""
 # Keep the legacy path until all PostgreSQL containers mount the config directory.
 # patroni_pgbackrest_container_config: /var/log/pgbackrest/conf/pgbackrest.conf
 patroni_pgbackrest_stanza_coord: coord

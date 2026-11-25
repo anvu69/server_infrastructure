@@ -1,3 +1,4 @@
+{% set heartbeat_enabled = (patroni_pgbackrest_heartbeat_url | default('')) != '' -%}
 [Unit]
 Description=pgBackRest %i backup of all Citus groups (coord, worker1, worker2)
 After=docker.service
@@ -5,4 +6,9 @@ Requires=docker.service
 
 [Service]
 Type=oneshot
-ExecStart=:/bin/bash -c 'rc=0; for g in worker1 worker2 coord; do "$1" backup "$g" "$2" || rc=1; done; exit "$rc"' pgbackrest-backup "{{ patroni_pgbackrest_backup_command_path | default('/usr/local/bin/pgbackrest-citus') }}" %i
+{% if heartbeat_enabled -%}
+EnvironmentFile=-{{ patroni_pgbackrest_heartbeat_env_file | default('/etc/pgbackrest-heartbeat.env') | replace('%', '%%') }}
+{% endif -%}
+ExecStart=:/bin/bash -c 'rc=0; for g in worker1 worker2 coord; do "$1" backup "$g" "$2" || rc=1; done; {% if heartbeat_enabled -%}
+if [[ -n "$PGBACKREST_HEARTBEAT_URL" ]]; then suffix=; if (( rc != 0 )); then suffix=/fail; fi; curl -fsS -m 30 --retry 3 -o /dev/null -- "$PGBACKREST_HEARTBEAT_URL$suffix" || true; fi; {% endif -%}
+exit "$rc"' pgbackrest-backup "{{ patroni_pgbackrest_backup_command_path | default('/usr/local/bin/pgbackrest-citus') }}" %i

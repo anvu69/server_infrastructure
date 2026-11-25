@@ -70,7 +70,27 @@
 
 - name: Manage scheduled pgBackRest backups
   when: patroni_pgbackrest_timers | default(false) | bool
+  vars:
+    patroni_pgbackrest_heartbeat_env_path: "{{ patroni_pgbackrest_heartbeat_env_file | default('/etc/pgbackrest-heartbeat.env') }}"
   block:
+    - name: Render pgBackRest heartbeat environment file
+      ansible.builtin.template:
+        src: templates/patroni/pgbackrest-heartbeat.env.j2
+        dest: "{{ patroni_pgbackrest_heartbeat_env_path }}"
+        owner: root
+        group: root
+        mode: "0600"
+      when: (patroni_pgbackrest_heartbeat_url | default('')) != ''
+      no_log: true
+      diff: false
+
+    - name: Remove unused pgBackRest heartbeat environment file
+      ansible.builtin.file:
+        path: "{{ patroni_pgbackrest_heartbeat_env_path }}"
+        state: absent
+      when: (patroni_pgbackrest_heartbeat_url | default('')) == ''
+      diff: false
+
     - name: Render pgBackRest systemd units
       ansible.builtin.template:
         src: "templates/patroni/{{ item }}.j2"

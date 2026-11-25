@@ -73,6 +73,13 @@ through PgBouncer and HAProxy to the current coordinator primary.
    host. The defaults are full on Sundays and differential Monday–Saturday,
    both at 03:00 `Asia/Ho_Chi_Minh`.
 
+   Optionally create a Better Stack Uptime heartbeat for this host with a
+   one-day period and a few hours of grace. With `curl` installed on the host,
+   set `patroni_pgbackrest_heartbeat_url` from Vault. After all three groups
+   have run, the backup service sends a GET to the URL on success or to
+   `<url>/fail` if any backup failed. Ping failures do not change the
+   backup result. Leave the URL unset or empty to disable pings.
+
 By default, the runtime files are under `/docker/patroni/runtime` and
 PgBouncer is published on `127.0.0.1:26432`. Keep the PostgreSQL and etcd data
 directories on fast local storage.
