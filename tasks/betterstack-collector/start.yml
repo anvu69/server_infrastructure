@@ -1,0 +1,48 @@
+---
+- name: Require a Better Stack collector secret
+  ansible.builtin.fail:
+    msg: Set betterstack_collector_secret to a real collector secret via vault_betterstack_collector_secret.
+  vars:
+    betterstack_collector_secret_normalized: "{{ betterstack_collector_secret | default('', true) | string | trim | lower }}"
+  when: >-
+    betterstack_collector_secret_normalized in ['', 'change_me', 'changeme', 'replace_me', 'placeholder', 'your_collector_secret']
+    or betterstack_collector_secret_normalized is match('^<.*>$')
+
+- name: Create the collector deployment directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ betterstack_collector_compose_dir | default('/docker/betterstack-collector') }}"
+    - /var/lib/better-stack
+
+- name: Copy the collector Compose file
+  ansible.builtin.copy:
+    src: ./docker/betterstack-collector/docker-compose.yml
+    dest: "{{ betterstack_collector_compose_dir | default('/docker/betterstack-collector') }}/docker-compose.yml"
+    mode: "0644"
+
+- name: Render the collector environment
+  ansible.builtin.template:
+    src: templates/betterstack-collector/env.j2
+    dest: "{{ betterstack_collector_compose_dir | default('/docker/betterstack-collector') }}/.env"
+    mode: "0600"
+  no_log: true
+
+- name: Deploy the collector Compose project
+  # Compose prefers the process environment over .env; HOSTNAME can already be exported.
+  environment:
+    HOSTNAME: "{{ betterstack_collector_hostname | default(inventory_hostname) }}"
+  no_log: true
+  block:
+    - name: Pull the pinned collector images
+      ansible.builtin.command:
+        cmd: docker compose -p better-stack-collector pull
+        chdir: "{{ betterstack_collector_compose_dir | default('/docker/betterstack-collector') }}"
+      changed_when: false
+
+    - name: Start the Better Stack collector
+      ansible.builtin.command:
+        cmd: docker compose -p better-stack-collector up -d --no-build
+        chdir: "{{ betterstack_collector_compose_dir | default('/docker/betterstack-collector') }}"

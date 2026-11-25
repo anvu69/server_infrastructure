@@ -12,6 +12,12 @@
 # Generate TLS files before first startup and place them in ${PATRONI_SSL_DIR:-./runtime/ssl}:
 #   ca.crt, server.crt, server.key, server.pem
 
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: ${PATRONI_LOG_MAX_SIZE:-50m}
+    max-file: "${PATRONI_LOG_MAX_FILE:-5}"
+
 x-etcd-env: &etcd-env
   ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
   ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
@@ -61,6 +67,7 @@ x-patroni-service: &patroni-service
   image: ${PATRONI_IMAGE:-anvu69/patroni-citus:4.1.3-pgbr}
   entrypoint: *patroni-entrypoint
   restart: unless-stopped
+  logging: *default-logging
   # PostgreSQL parallel queries use dynamic shared memory; Docker defaults to 64 MB.
   # Apply changes one node at a time: docker compose up -d --no-deps --force-recreate <service> (see README).
   shm_size: ${PATRONI_WORKER_SHM_SIZE:-256m}
@@ -96,6 +103,7 @@ services:
     container_name: citus-etcd1
     hostname: etcd1
     restart: unless-stopped
+    logging: *default-logging
     oom_score_adj: ${PATRONI_OOM_SCORE_ADJ:--800}
     networks: [citus]
     environment: *etcd-env
@@ -108,6 +116,7 @@ services:
     container_name: citus-etcd2
     hostname: etcd2
     restart: unless-stopped
+    logging: *default-logging
     oom_score_adj: ${PATRONI_OOM_SCORE_ADJ:--800}
     networks: [citus]
     environment: *etcd-env
@@ -120,6 +129,7 @@ services:
     container_name: citus-etcd3
     hostname: etcd3
     restart: unless-stopped
+    logging: *default-logging
     oom_score_adj: ${PATRONI_OOM_SCORE_ADJ:--800}
     networks: [citus]
     environment: *etcd-env
@@ -132,6 +142,7 @@ services:
     container_name: citus-haproxy
     hostname: haproxy
     restart: unless-stopped
+    logging: *default-logging
     oom_score_adj: ${PATRONI_OOM_SCORE_ADJ:--800}
     networks: [citus]
     depends_on:
@@ -171,6 +182,7 @@ services:
     container_name: citus-pgbouncer
     hostname: pgbouncer
     restart: unless-stopped
+    logging: *default-logging
     oom_score_adj: ${PATRONI_OOM_SCORE_ADJ:--800}
     networks: [citus, tunnel]
     depends_on:
