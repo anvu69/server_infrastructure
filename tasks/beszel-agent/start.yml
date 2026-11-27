@@ -1,0 +1,46 @@
+---
+- name: Require Beszel agent credentials
+  ansible.builtin.fail:
+    msg: Set beszel_agent_token and beszel_agent_key to real values via vault_beszel_agent_token and vault_beszel_agent_key.
+  vars:
+    beszel_agent_token_normalized: "{{ beszel_agent_token | default('', true) | string | trim | lower }}"
+    beszel_agent_key_normalized: "{{ beszel_agent_key | default('', true) | string | trim | lower }}"
+    beszel_agent_placeholders: ['', 'change_me', 'changeme', 'replace_me', 'placeholder', 'your_token', 'your_key', 'your_agent_token', 'your_agent_key']
+  when: >-
+    beszel_agent_token_normalized in beszel_agent_placeholders
+    or beszel_agent_token_normalized is match('^<.*>$')
+    or beszel_agent_key_normalized in beszel_agent_placeholders
+    or beszel_agent_key_normalized is match('^<.*>$')
+
+- name: Create the Beszel agent deployment directory
+  ansible.builtin.file:
+    path: "{{ beszel_agent_compose_dir | default('/docker/beszel-agent') }}"
+    state: directory
+    mode: "0755"
+
+- name: Copy the Beszel agent Compose file
+  ansible.builtin.copy:
+    src: ./docker/beszel-agent/docker-compose.yml
+    dest: "{{ beszel_agent_compose_dir | default('/docker/beszel-agent') }}/docker-compose.yml"
+    mode: "0644"
+
+- name: Render the Beszel agent environment
+  ansible.builtin.template:
+    src: templates/beszel-agent/env.j2
+    dest: "{{ beszel_agent_compose_dir | default('/docker/beszel-agent') }}/.env"
+    mode: "0600"
+  no_log: true
+
+- name: Deploy the Beszel agent Compose project
+  no_log: true
+  block:
+    - name: Pull the pinned Beszel agent image
+      ansible.builtin.command:
+        cmd: docker compose -p beszel-agent pull
+        chdir: "{{ beszel_agent_compose_dir | default('/docker/beszel-agent') }}"
+      changed_when: false
+
+    - name: Start the Beszel agent
+      ansible.builtin.command:
+        cmd: docker compose -p beszel-agent up -d --no-build
+        chdir: "{{ beszel_agent_compose_dir | default('/docker/beszel-agent') }}"
