@@ -86,6 +86,7 @@ guard in a public clone.
 - Postgresql (optional)
 - Mongodb (optional)
 - Dockovpn (optional)
+- [Beszel agent](docker/beszel-agent/README.md) (optional)
 
 ### Install galaxy packages
 

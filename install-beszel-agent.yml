@@ -1,0 +1,13 @@
+---
+- name: Deploy Beszel agent
+  hosts: all
+  become: true
+  gather_facts: false
+
+  pre_tasks:
+    - import_tasks: tasks/common/only-on-service-hosts.yml
+      vars:
+        service: beszel-agent
+
+  tasks:
+    - import_tasks: tasks/beszel-agent/start.yml

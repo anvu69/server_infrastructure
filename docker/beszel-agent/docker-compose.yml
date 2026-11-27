@@ -1,0 +1,26 @@
+---
+# Source: https://beszel.dev/guide/agent-installation#docker-or-podman
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "3"
+
+services:
+  beszel-agent:
+    image: henrygd/beszel-agent:${BESZEL_AGENT_TAG:?}
+    container_name: beszel-agent
+    restart: unless-stopped
+    network_mode: host
+    logging: *default-logging
+    environment:
+      - HUB_URL
+      - TOKEN
+      - KEY
+      - DISABLE_SSH=true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - beszel-agent-data:/var/lib/beszel-agent
+
+volumes:
+  beszel-agent-data:
