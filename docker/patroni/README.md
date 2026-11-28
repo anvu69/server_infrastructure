@@ -94,6 +94,7 @@ for Citus workers and PgBouncer server pools.
 
 | Bootstrap variable | Small-host starting point |
 | --- | --- |
+| `patroni_pg_shared_preload_libraries` | `citus,pg_stat_statements` (default) |
 | `patroni_pg_shared_buffers` | `128MB` |
 | `patroni_pg_effective_cache_size` | `512MB` |
 | `patroni_pg_work_mem` | `4MB` |
@@ -108,6 +109,13 @@ for Citus workers and PgBouncer server pools.
 | `patroni_pg_max_parallel_maintenance_workers` | `1` |
 
 These values apply when each group's DCS configuration is first bootstrapped.
+Changing `patroni_pg_shared_preload_libraries` does not affect running groups;
+use `patronictl edit-config --group <n>` for each group, then perform a
+rolling restart.
+
+The image must ship every listed library. Keep `citus` first and list
+`pg_search` after it, for example `citus,pg_search,pg_stat_statements` with
+`anvu69/patroni-citus:4.1.3-pgbr-pgsearch0.26.6`.
 
 ## Production host đang chạy
 

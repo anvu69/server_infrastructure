@@ -37,7 +37,8 @@ bootstrap:
         - hostssl replication replicator all scram-sha-256
         - hostssl all all all scram-sha-256
       parameters:
-        shared_preload_libraries: "citus,pg_stat_statements"
+        # Written to DCS only when the group bootstraps.
+        shared_preload_libraries: "{{ patroni_pg_shared_preload_libraries | default('citus,pg_stat_statements') }}"
         max_prepared_transactions: {{ patroni_pg_max_prepared_transactions | default(4000) }}
         citus.max_intermediate_result_size: "1GB"
         citus.max_cached_conns_per_worker: 10
