@@ -47,6 +47,8 @@ patroni_ssl_org: Patroni Citus
 patroni_ssl_days: 3650
 
 # PostgreSQL settings applied only when bootstrapping new Patroni groups.
+# Keep citus first; add pg_search after citus only if the image ships it.
+patroni_pg_shared_preload_libraries: citus,pg_stat_statements
 patroni_pg_shared_buffers: 4GB
 patroni_pg_effective_cache_size: 12GB
 patroni_pg_work_mem: 64MB
